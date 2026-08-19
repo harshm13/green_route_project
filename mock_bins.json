@@ -1,0 +1,44 @@
+[
+  {
+    "id": "B001",
+    "location_name": "Ellisbridge Intersection",
+    "lat": 23.0235,
+    "lng": 72.5724,
+    "fill_level": 85
+  },
+  {
+    "id": "B002",
+    "location_name": "Navrangpura Commerce College",
+    "lat": 23.0365,
+    "lng": 72.5611,
+    "fill_level": 40
+  },
+  {
+    "id": "B003",
+    "location_name": "Paldi Bus Stand",
+    "lat": 23.0120,
+    "lng": 72.5580,
+    "fill_level": 92
+  },
+  {
+    "id": "B004",
+    "location_name": "Satellite Ring Road",
+    "lat": 23.0270,
+    "lng": 72.5270,
+    "fill_level": 25
+  },
+  {
+    "id": "B005",
+    "location_name": "Vastrapur Lake",
+    "lat": 23.0350,
+    "lng": 72.5290,
+    "fill_level": 95
+  },
+  {
+    "id": "B006",
+    "location_name": "CG Road Mall",
+    "lat": 23.0295,
+    "lng": 72.5640,
+    "fill_level": 60
+  }
+]

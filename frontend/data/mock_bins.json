@@ -1,0 +1,8 @@
+[
+  { "id": 1, "location_name": "Manek Chowk Market", "lat": 23.0235, "lng": 72.5854, "fill_level": 85 },
+  { "id": 2, "location_name": "Law Garden", "lat": 23.0260, "lng": 72.5600, "fill_level": 45 },
+  { "id": 3, "location_name": "Kankaria Lake Front", "lat": 23.0062, "lng": 72.6025, "fill_level": 92 },
+  { "id": 4, "location_name": "Vastrapur Lake", "lat": 23.0375, "lng": 72.5283, "fill_level": 30 },
+  { "id": 5, "location_name": "Sabarmati Ashram", "lat": 23.0601, "lng": 72.5802, "fill_level": 88 },
+  { "id": 6, "location_name": "Alpha One Mall", "lat": 23.0396, "lng": 72.5307, "fill_level": 60 }
+]

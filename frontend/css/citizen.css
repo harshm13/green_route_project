@@ -1,0 +1,457 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif; 
+}
+
+body {
+    background: linear-gradient(135deg, #80b552 0%, #8a9f8b 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    
+    color: #3e4f24; 
+}
+
+.app-container {
+    width: 100%;
+    max-width: 420px; 
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-bottom: 40px;
+}
+
+/* --- ENHANCED GLASSMORPHISM (Light Yellow Tint) --- */
+.glass-panel {
+    background: linear-gradient(135deg, rgba(255, 253, 231, 0.65), rgba(255, 253, 231, 0.25)); 
+    backdrop-filter: blur(16px);          
+    -webkit-backdrop-filter: blur(16px);  
+    border-top: 1px solid rgba(255, 253, 231, 0.9); 
+    border-left: 1px solid rgba(255, 253, 231, 0.9);
+    border-right: 1px solid rgba(255, 253, 231, 0.4);
+    border-bottom: 1px solid rgba(255, 253, 231, 0.4);
+    border-radius: 24px;
+    box-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.1); 
+    padding: 24px;
+}
+
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: #3e4f24; 
+}
+
+/* --- HEADER & PROGRESS BAR --- */
+.profile-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.avatar {
+    font-size: 2rem;
+    background: rgba(255, 253, 231, 0.7); 
+    height: 50px;
+    width: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.profile-header h2 { font-size: 1.2rem; color: #3e4f24; line-height: 1.2;}
+.subtitle { font-size: 0.85rem; opacity: 0.8; color: #4a5d23; }
+
+.points-showcase p { font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #556b2f;}
+.points-showcase h1 { font-size: 3rem; color: #556b2f; font-weight: 700; text-shadow: 0 2px 4px rgba(255, 253, 231, 0.6); }
+
+/* Progress Bar Styles */
+.progress-section { margin-top: 15px; }
+.progress-bg {
+    width: 100%;
+    height: 10px;
+    background: rgba(62, 79, 36, 0.15); 
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 8px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6b8e23, #9acd32); 
+    width: 50%; 
+    border-radius: 10px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.progress-text { font-size: 0.8rem; font-weight: 600; color: #556b2f; }
+
+/* --- ACTION GRID --- */
+.action-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.action-btn {
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 20px 10px;
+}
+
+.action-btn:hover {
+    transform: translateY(-5px) scale(1.02);
+    background: linear-gradient(135deg, rgba(255, 253, 231, 0.85), rgba(255, 253, 231, 0.45));
+    box-shadow: 0 15px 35px 0 rgba(0, 0, 0, 0.15); 
+}
+
+.icon-circle {
+    font-size: 2rem;
+    background: rgba(255, 253, 231, 0.6);
+    height: 60px;
+    width: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px auto;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.action-btn h3 { font-size: 1rem; color: #3e4f24; }
+.action-btn p { font-size: 0.8rem; opacity: 0.8; color: #4a5d23;}
+
+/* --- REWARDS & LEADERBOARD --- */
+.rewards-list, .leaderboard-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.reward-item, .leaderboard-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    border-radius: 16px;
+    background: rgba(205, 228, 143, 0.4);
+    border: 1px solid rgba(81, 9, 15, 0.6);
+    transition: all 0.3s ease;
+}
+
+.reward-item.locked { opacity: 0.65; filter: grayscale(100%); }
+.reward-item.unlocked {
+    background: rgba(9, 134, 23, 0.863); 
+    border-color: #240909;
+    opacity: 1;
+    filter: grayscale(0%);
+    box-shadow: 0 4px 15px rgba(107, 142, 35, 0.15);
+}
+
+.reward-icon { font-size: 2.2rem; margin-right: 15px; }
+
+.reward-details { flex-grow: 1; }
+
+.reward-details h4 { margin-bottom: 4px; font-size: 1rem; color: #21350c; }
+.reward-details p { font-size: 0.8rem; color: #000000; }
+
+.status-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: rgba(62, 79, 36, 0.1);
+    color: #3e4f24;
+}
+
+.unlocked .status-badge {
+    background: #6b8e23; 
+    color: #fffde7; 
+    text-transform: uppercase;
+    box-shadow: 0 2px 8px rgba(107, 142, 35, 0.4);
+}
+
+.leaderboard-item:hover {
+    background: rgba(255, 253, 231, 0.7);
+    transform: translateX(5px);
+}
+.rank-badge {
+    font-weight: 700;
+    background: rgba(255, 253, 231, 0.8);
+    color: #3e4f24;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-right: 12px;
+}
+.lb-points { color: #556b2f; font-weight: 700; }
+
+/* --- LEAF-SHAPED REWARD MODAL --- */
+.reward-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease;
+}
+
+.reward-modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.reward-content {
+    border-radius: 5px 100px 5px 100px; 
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    padding: 50px 40px;
+    text-align: center;
+    color: #ffffff; 
+    transform: scale(0.5);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 15px 35px rgba(39, 174, 96, 0.4);
+    border: 3px solid #abebc6; 
+    max-width: 85%;
+}
+
+.reward-modal.show .reward-content {
+    transform: scale(1); 
+}
+
+.reward-content h2 {
+    color: #ffffff;
+    margin-bottom: 8px;
+    font-size: 1.8rem;
+}
+
+.reward-content p {
+    color: #e8f8f5;
+    font-size: 1.1rem;
+}
+
+.highlight-points {
+    color: #f1c40f; 
+    font-size: 34px;
+    font-weight: 800;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+}
+
+.reward-icon {
+    font-size: 70px;
+    margin-bottom: 10px;
+    animation: floatIcon 2s ease-in-out infinite;
+    text-shadow: 0 5px 15px rgba(0,0,0,0.2); 
+}
+
+.reward-content .btn-submit {
+    background: #ffffff;
+    color: #27ae60;
+    border-radius: 30px; 
+    padding: 12px 24px;
+    font-weight: 700;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.reward-content .btn-submit:hover {
+    background: #f1f2f6;
+    transform: translateY(-2px);
+}
+
+@keyframes floatIcon {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+/* =========================================
+   GAMIFICATION ANIMATIONS & EFFECTS
+   ========================================= */
+
+/* 1. Pulse Animation for the Scan Button */
+@keyframes pulseGlow {
+    0% { box-shadow: 0 0 0 0 rgba(107, 142, 35, 0.4); }
+    70% { box-shadow: 0 0 0 15px rgba(107, 142, 35, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(107, 142, 35, 0); }
+}
+
+.pulse-btn {
+    animation: pulseGlow 2s infinite;
+}
+
+/* Pause the pulse when the user hovers over it */
+.pulse-btn:hover {
+    animation: none; 
+}
+
+/* 2. Staggered Fade-In Reveal on Page Load */
+@keyframes fadeInUp {
+    from { 
+        opacity: 0; 
+        transform: translateY(20px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+.fade-in {
+    opacity: 0; /* Start invisible */
+    animation: fadeInUp 0.6s ease-out forwards;
+}
+
+/* Delays to make elements appear one after another */
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.3s; }
+.delay-3 { animation-delay: 0.5s; }
+.delay-4 { animation-delay: 0.7s; }
+/* =========================================
+   POP-UPS & DYNAMIC ANIMATIONS
+   ========================================= */
+
+/* Modal Background Overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Modal Content Box */
+.modal-content {
+    text-align: center;
+    transform: scale(1);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    max-width: 320px;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.modal-overlay.hidden .modal-content {
+    transform: scale(0.8);
+}
+
+.modal-icon {
+    font-size: 4rem;
+    margin-bottom: 10px;
+}
+
+/* Special styling just for the Claim Reward Modal */
+.claim-style {
+    background: linear-gradient(135deg, rgba(154, 205, 50, 0.95), rgba(107, 142, 35, 0.95));
+    border-radius: 24px;
+    padding: 30px 20px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+    border: 2px solid #fffde7;
+}
+
+.claim-style h2 { color: #fffde7; font-size: 1.8rem; margin-bottom: 5px;}
+.claim-style p { color: #fffde7; font-weight: 600; font-size: 1.1rem;}
+
+.bounce { animation: bounce 2s infinite; }
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-20px); }
+    60% { transform: translateY(-10px); }
+}
+
+.action-btn-small {
+    margin-top: 20px;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 30px;
+    background: #fffde7;
+    color: #3e4f24;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.action-btn-small:hover { 
+    transform: scale(1.05); 
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* Leaderboard Dynamic Re-sorting Animation */
+.list-move {
+    animation: slideInRight 0.5s ease forwards;
+}
+
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+/* --- RANK BADGE STYLING --- */
+.rank-badge-display {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 4px 12px;
+    background: linear-gradient(90deg, #6b8e23, #9acd32);
+    color: #fffde7;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 12px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 8px rgba(107, 142, 35, 0.3);
+    letter-spacing: 0.5px;
+}
+/* --- RANK BADGE HOVER EFFECT --- */
+.rank-badge-display:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(107, 142, 35, 0.5);
+    transition: all 0.2s ease;
+}
+
+/* Custom scrollbar for the Rank Tier list */
+#rank-progress-list::-webkit-scrollbar {
+    width: 6px;
+}
+#rank-progress-list::-webkit-scrollbar-thumb {
+    background: #6b8e23;
+    border-radius: 10px;
+}
+/* --- STREAK BADGE --- */
+.streak-badge {
+    background: linear-gradient(90deg, #ff9800, #ff5722);
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(255, 87, 34, 0.4);
+    animation: pulseGlow 2s infinite;
+}

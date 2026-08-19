@@ -1,0 +1,113 @@
+/* Eco-UI Global Theme */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Soft & Friendly Color Palette */
+  --eco-mint-light: #F0FDF4; /* Light mint background */
+  --eco-green-primary: #10B981; /* Pastel emerald primary */
+  --eco-green-hover: #059669; /* Darker emerald for hover states */
+  --eco-green-light: #A7F3D0;
+  --eco-white: #FFFFFF;
+  
+  --eco-text-dark: #1F2937; /* Soft dark slate for text */
+  --eco-text-light: #6B7280; /* Medium gray for secondary text */
+  --eco-border: #E5E7EB;
+  
+  /* Modern soft shapes and shadows */
+  --border-radius-soft: 20px;
+  --border-radius-pill: 9999px;
+  --border-radius-input: 12px;
+  
+  --shadow-soft: 0 10px 25px -5px rgba(16, 185, 129, 0.1), 0 8px 10px -6px rgba(16, 185, 129, 0.1);
+  --shadow-hover: 0 20px 25px -5px rgba(16, 185, 129, 0.15), 0 10px 10px -5px rgba(16, 185, 129, 0.1);
+  --shadow-input-focus: 0 0 0 4px rgba(16, 185, 129, 0.2);
+}
+
+body {
+  margin: 0;
+  font-family: 'Outfit', sans-serif;
+  background-color: var(--eco-mint-light);
+  color: var(--eco-text-dark);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Utilities */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 2.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  border-radius: var(--border-radius-pill);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  border: 2px solid transparent;
+  outline: none;
+}
+
+.btn-primary {
+  background-color: var(--eco-green-primary);
+  color: var(--eco-white);
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);
+}
+
+.btn-primary:hover {
+  background-color: var(--eco-green-hover);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 12px 20px rgba(16, 185, 129, 0.3);
+}
+
+.btn-primary:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn-outline {
+  background-color: var(--eco-white);
+  color: var(--eco-green-primary);
+  border-color: var(--eco-green-light);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.btn-outline:hover {
+  background-color: var(--eco-mint-light);
+  border-color: var(--eco-green-primary);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 15px rgba(16, 185, 129, 0.15);
+}
+
+.btn-outline:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Alert/Toast Base */
+.eco-alert {
+  padding: 1rem 1.5rem;
+  border-radius: 16px;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  animation: slideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.eco-alert.success {
+  background-color: #D1FAE5;
+  color: #065F46;
+  border: 1px solid #34D399;
+}
+
+.eco-alert.error {
+  background-color: #FEE2E2;
+  color: #991B1B;
+  border: 1px solid #F87171;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}

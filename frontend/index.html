@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Waste Management - Keep Our World Clean 🌱</title>
+    <meta name="description" content="Join the smart waste revolution. Earn rewards for recycling or manage city fleets with ease.">
+    <link rel="stylesheet" href="css/global.css">
+    <style>
+        .hero-section {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+            box-sizing: border-box;
+            background: linear-gradient(135deg, var(--eco-mint-light) 0%, #E0F2FE 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Abstract soft organic shapes for background */
+        .hero-section::before,
+        .hero-section::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: 0;
+            animation: floatShape 10s ease-in-out infinite alternate;
+        }
+
+        .hero-section::before {
+            width: 400px;
+            height: 400px;
+            background: rgba(16, 185, 129, 0.15);
+            top: -100px;
+            left: -100px;
+        }
+
+        .hero-section::after {
+            width: 500px;
+            height: 500px;
+            background: rgba(186, 230, 253, 0.3);
+            bottom: -150px;
+            right: -100px;
+            animation-delay: -5s;
+        }
+
+        @keyframes floatShape {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(30px, 40px) scale(1.1); }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 850px;
+            animation: fadeInTop 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .hero-headline {
+            font-size: 4.5rem;
+            font-weight: 700;
+            color: var(--eco-text-dark);
+            margin-bottom: 1.5rem;
+            line-height: 1.15;
+            letter-spacing: -0.03em;
+            text-wrap: balance;
+        }
+
+        .hero-subheadline {
+            font-size: 1.5rem;
+            color: var(--eco-text-light);
+            margin-bottom: 3.5rem;
+            line-height: 1.6;
+            font-weight: 400;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            text-wrap: balance;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        @keyframes fadeInTop {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(31, 41, 55, 0.4);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--eco-white);
+            border-radius: var(--border-radius-soft);
+            padding: 3rem;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: var(--shadow-hover);
+            transform: scale(0.95);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: transparent;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--eco-text-light);
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .modal-close:hover {
+            color: var(--eco-text-dark);
+        }
+
+        .modal-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--eco-text-dark);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .role-cards {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .role-card {
+            flex: 1;
+            background: var(--eco-mint-light);
+            border: 2px solid var(--eco-border);
+            border-radius: var(--border-radius-soft);
+            padding: 2rem 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .role-card:hover {
+            border-color: var(--eco-green-primary);
+            background: var(--eco-white);
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .role-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .role-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--eco-text-dark);
+        }
+
+        @media (max-width: 768px) {
+            .hero-headline { font-size: 3rem; }
+            .hero-subheadline { font-size: 1.25rem; }
+            .button-group { flex-direction: column; max-width: 320px; margin: 0 auto; width: 100%; }
+            .btn { width: 100%; }
+            .role-cards { flex-direction: column; }
+            .modal-content { padding: 2rem; width: 90%; }
+        }
+    </style>
+</head>
+<body>
+    <main class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-headline">Let's Keep Our World Clean, Together! 🌱</h1>
+            <p class="hero-subheadline">Join the smart waste revolution. Earn rewards for recycling or manage city fleets with ease.</p>
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="openModal('register')">Create Account</button>
+                <button class="btn btn-outline" onclick="openModal('login')">Sign In</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Role Selection Modal -->
+    <div class="modal-overlay" id="roleModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">✕</button>
+            <h2 class="modal-title" id="modalTitle">How would you like to join?</h2>
+            <div class="role-cards">
+                <a href="#" class="role-card" id="citizenLink">
+                    <div class="role-icon">🏡</div>
+                    <div class="role-name">As a Citizen</div>
+                </a>
+                <a href="#" class="role-card" id="adminLink">
+                    <div class="role-icon">🏢</div>
+                    <div class="role-name">As an Administrator</div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openModal(action) {
+            const modal = document.getElementById('roleModal');
+            const title = document.getElementById('modalTitle');
+            const citizenLink = document.getElementById('citizenLink');
+            const adminLink = document.getElementById('adminLink');
+
+            if (action === 'register') {
+                title.textContent = 'How would you like to join?';
+            } else {
+                title.textContent = 'Sign In As';
+            }
+
+            citizenLink.href = `login.html?action=${action}&role=citizen`;
+            adminLink.href = `login.html?action=${action}&role=admin`;
+
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('roleModal').classList.remove('active');
+        }
+
+        // Close on clicking outside
+        document.getElementById('roleModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+    </script>
+</body>
+</html>

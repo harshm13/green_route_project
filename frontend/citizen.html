@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green Citizen App</title>
+    <!-- Modern Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/citizen.css">
+</head>
+<body>
+    <div class="app-container">
+        
+        <!-- Header / Profile Panel (Fades in first) -->
+        <header class="glass-panel header-card fade-in delay-1">
+        <div class="profile-header">
+    <div class="avatar" id="rank-icon">🌱</div>
+    <div>
+        <h2 style="display: flex; align-items: center; gap: 8px;">
+            Kushal 
+            <span class="streak-badge" id="streak-badge">🔥 <span id="streak-count">1</span></span>
+        </h2>
+        <p class="subtitle">Silver Oak - Block C</p>
+        <div class="rank-badge-display" id="user-rank" onclick="openRankProgress()" style="cursor: pointer;">Novice Sprout ℹ️</div>
+    </div>
+</div>
+            
+            <div class="points-showcase">
+                <p>Total Green Points</p>
+                <h1 id="points-display">500</h1>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-section">
+                <div class="progress-bg">
+                    <div class="progress-fill" id="progress-bar"></div>
+                </div>
+                <p class="progress-text">Next reward at <span id="next-milestone-text">1000</span> pts</p>
+            </div>
+        </header>
+
+        <!-- Grid for Action Buttons (Fades in second) -->
+        <div class="action-grid fade-in delay-2">
+            <!-- Added pulse-btn class here -->
+            <div class="glass-panel action-btn pulse-btn" id="scan-btn" onclick="simulateQRScan()">
+                <div class="icon-circle">📷</div>
+                <h3>Scan QR</h3>
+                <p>Log Waste</p>
+            </div>
+            
+            <div class="glass-panel action-btn" id="rewards-card">
+                <div class="icon-circle">🏆</div>
+                <h3>Rewards</h3>
+                <p>View Status</p>
+            </div>
+        </div>
+        <!-- Daily Missions Panel -->
+<div class="glass-panel fade-in delay-3" style="margin-bottom: 20px;">
+    <h3 class="section-title">Daily Missions</h3>
+    <ul class="rewards-list">
+        <li class="reward-item locked" id="mission-1">
+            <span class="reward-icon">🎯</span>
+            <div class="reward-details">
+                <h4>First Scan of the Day</h4>
+                <p>Reward: +50 Bonus Pts</p>
+            </div>
+            <span class="status-badge" id="mission-1-badge">Pending</span>
+        </li>
+    </ul>
+</div>
+
+        <!-- Reward Catalog Panel (Fades in third) -->
+        <div class="glass-panel fade-in delay-3">
+            <h3 class="section-title">Reward Catalog</h3>
+            <ul class="rewards-list" id="rewards-list">
+                <!-- 1000 Point Milestone -->
+                <li class="reward-item locked" id="reward-1000">
+                    <span class="reward-icon">☕</span>
+                    <div class="reward-details">
+                        <h4>Free Campus Coffee</h4>
+                        <p>Unlocks at 1000 pts</p>
+                    </div>
+                    <span class="status-badge">Locked</span>
+                </li>
+                
+                <!-- 1500 Point Milestone -->
+                <li class="reward-item locked" id="reward-1500">
+                    <span class="reward-icon">👕</span>
+                    <div class="reward-details">
+                        <h4>Silver Oak T-Shirt</h4>
+                        <p>Unlocks at 1500 pts</p>
+                    </div>
+                    <span class="status-badge">Locked</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Leaderboard Panel (Fades in fourth) -->
+        <div class="glass-panel fade-in delay-4">
+            <h3 class="section-title">Campus Leaderboard</h3>
+            <ul class="leaderboard-list" id="leaderboard-list">
+                <!-- Data populated by JS -->
+            </ul>
+        </div>
+        <!-- ... Your existing leaderboard panel ... -->
+        
+        <!-- 1. Scan QR Success Modal -->
+        <div id="scan-modal" class="modal-overlay hidden">
+            <div class="modal-content glass-panel">
+                <div class="modal-icon">🌍</div>
+                <h2 id="scan-modal-text">Super Recycler!</h2>
+                <p>+100 Points added!</p>
+            </div>
+        </div>
+
+        <!-- 2. Claim Reward Celebration Modal -->
+        <div id="claim-modal" class="modal-overlay hidden">
+            <div class="modal-content claim-style">
+                <div class="modal-icon bounce">🎉</div>
+                <h2>Reward Claimed!</h2>
+                <p id="claim-modal-text">You got a Free Campus Coffee!</p>
+                <button class="action-btn-small" onclick="closeClaimModal()">Awesome!</button>
+            </div>
+        </div>
+        <!-- 3. Rank Up Celebration Modal -->
+<div id="rank-up-modal" class="modal-overlay hidden">
+    <div class="modal-content claim-style">
+        <div class="modal-icon bounce" id="rank-up-icon">⚔️</div>
+        <h2>RANK UP!</h2>
+        <p>You have been promoted to <br><span id="rank-up-text" style="font-size: 1.4rem; color: #fff;">Nature Knight</span>!</p>
+        <button class="action-btn-small" onclick="closeRankModal()">Continue</button>
+    </div>
+</div>
+<!-- 4. Rank Progress Tier List Modal -->
+<div id="rank-progress-modal" class="modal-overlay hidden">
+    <div class="modal-content glass-panel" style="max-width: 360px; padding: 20px;">
+        <h2 style="color: #3e4f24; margin-bottom: 15px; font-size: 1.5rem;">Rank Tiers</h2>
+        <ul class="rewards-list" id="rank-progress-list" style="text-align: left; width: 100%; max-height: 50vh; overflow-y: auto;">
+            <!-- Populated by JavaScript -->
+        </ul>
+        <button class="action-btn-small" style="margin-top: 20px; background: #6b8e23; color: #fff;" onclick="closeRankProgress()">Close</button>
+    </div>
+</div>
+    </div> <!-- This is the closing tag of your app-container -->
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="js/citizen.js"></script>
+</body>
+</html>
+    </div>
+
+    <!-- 1. The Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <script src="js/citizen.js"></script>
+</body>
+</html>

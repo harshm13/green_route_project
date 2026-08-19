@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication - Smart Waste Management</title>
+    <link rel="stylesheet" href="css/global.css">
+    <style>
+        /* login.css embedded due to file creation permissions */
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            box-sizing: border-box;
+            background: radial-gradient(circle at top right, #E0F2FE 0%, var(--eco-mint-light) 60%);
+        }
+
+        .auth-card {
+            background: var(--eco-white);
+            border-radius: var(--border-radius-soft);
+            box-shadow: var(--shadow-soft);
+            width: 100%;
+            max-width: 480px;
+            padding: 3rem 2.5rem;
+            box-sizing: border-box;
+            position: relative;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .auth-card:hover {
+            box-shadow: var(--shadow-hover);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .auth-header h2 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: var(--eco-text-dark);
+            margin: 0 0 0.5rem 0;
+            letter-spacing: -0.02em;
+        }
+
+        .auth-header p {
+            color: var(--eco-text-light);
+            font-size: 1.125rem;
+            margin: 0;
+        }
+
+        /* Form Container */
+        .form-view {
+            display: none; /* hidden by default */
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .form-view.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Form Inputs */
+        .form-group {
+            margin-bottom: 1.25rem;
+            position: relative;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--eco-text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            font-family: inherit;
+            font-size: 1rem;
+            color: var(--eco-text-dark);
+            background-color: #F9FAFB;
+            border: 1px solid var(--eco-border);
+            border-radius: var(--border-radius-input);
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .form-input::placeholder {
+            color: #9CA3AF;
+        }
+
+        .form-input:focus {
+            background-color: var(--eco-white);
+            border-color: var(--eco-green-primary);
+            box-shadow: var(--shadow-input-focus);
+        }
+
+        .auth-btn {
+            width: 100%;
+            margin-top: 1rem;
+            padding: 0.875rem;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 1.5rem;
+            color: var(--eco-text-light);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .back-link:hover {
+            color: var(--eco-green-primary);
+        }
+
+        @media (max-width: 480px) {
+            .auth-card {
+                padding: 2rem 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="auth-container">
+        <div class="auth-card" id="auth-card">
+            <div class="auth-header">
+                <h2 id="dynamic-title">Welcome 🌱</h2>
+                <p id="dynamic-subtitle">Join our green initiative today.</p>
+            </div>
+            
+            <div id="alert-container"></div>
+
+            <!-- Citizen Registration Form -->
+            <form class="form-view" id="citizen-register-form">
+                <div class="form-group">
+                    <label class="form-label" for="cit-name">Full Name</label>
+                    <input type="text" id="cit-name" class="form-input" required placeholder="Jane Doe">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="cit-email">Email Address</label>
+                    <input type="email" id="cit-email" class="form-input" required placeholder="eco@citizen.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="cit-password">Password</label>
+                    <input type="password" id="cit-password" class="form-input" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary auth-btn">Create Citizen Account</button>
+            </form>
+
+            <!-- Admin Registration Form -->
+            <form class="form-view" id="admin-register-form">
+                <div class="form-group">
+                    <label class="form-label" for="adm-name">Full Name</label>
+                    <input type="text" id="adm-name" class="form-input" required placeholder="John Smith">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="adm-id">Employee / Admin ID</label>
+                    <input type="text" id="adm-id" class="form-input" required placeholder="ADM-2026-X">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="adm-email">Email Address</label>
+                    <input type="email" id="adm-email" class="form-input" required placeholder="admin@city.gov">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="adm-password">Password</label>
+                    <input type="password" id="adm-password" class="form-input" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary auth-btn">Request Admin Access</button>
+            </form>
+
+            <!-- Shared Login Form -->
+            <form class="form-view" id="login-form">
+                <div class="form-group">
+                    <label class="form-label" for="login-email">Email Address</label>
+                    <input type="email" id="login-email" class="form-input" required placeholder="name@domain.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="login-password">Password</label>
+                    <input type="password" id="login-password" class="form-input" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary auth-btn">Sign In</button>
+            </form>
+
+            <a href="index.html" class="back-link">← Back to Home</a>
+        </div>
+    </main>
+
+    <script src="js/login.js"></script>
+</body>
+</html>
