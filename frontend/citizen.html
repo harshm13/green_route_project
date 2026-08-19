@@ -10,6 +10,14 @@
     <link rel="stylesheet" href="css/citizen.css">
 </head>
 <body>
+    <nav class="navbar citizen-nav">
+        <div class="brand">🌿 EcoRoute</div>
+        <div class="nav-links">
+            <a href="index.html" title="Home"><span class="icon">🏠</span></a>
+            <a href="citizen.html" class="active" title="Dashboard"><span class="icon">📊</span> App</a>
+            <a href="#" onclick="logoutUser(event)" class="btn-logout" title="Logout"><span class="icon">🚪</span></a>
+        </div>
+    </nav>
     <div class="app-container">
         
         <!-- Header / Profile Panel (Fades in first) -->
@@ -145,6 +153,7 @@
     </div> <!-- This is the closing tag of your app-container -->
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="auth.js"></script>
     <script src="js/citizen.js"></script>
 </body>
 </html>

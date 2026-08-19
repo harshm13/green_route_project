@@ -15,10 +15,12 @@
 
 <body>
     <nav class="navbar">
-        <div class="brand">🌿 EcoRoute Admin</div>
+        <div class="brand">🌿 EcoRoute</div>
         <div class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="admin.html">Dashboard</a>
+            <a href="index.html"><span class="icon">🏠</span> Home</a>
+            <a href="admin.html" class="active"><span class="icon">📊</span> Dashboard</a>
+            <a href="approvals.html"><span class="icon">✅</span> Approvals <span class="badge" id="nav-badge">3</span></a>
+            <a href="#" onclick="logoutUser(event)" class="btn-logout"><span class="icon">🚪</span> Logout</a>
         </div>
     </nav>
 
@@ -78,6 +80,7 @@
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <!-- Leaflet Heatmap Plugin -->
     <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <script src="auth.js"></script>
     <script type="module" src="js/admin.js"></script>
 </body>
 

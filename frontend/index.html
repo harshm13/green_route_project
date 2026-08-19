@@ -237,6 +237,7 @@
         </div>
     </div>
 
+    <script src="auth.js"></script>
     <script>
         function openModal(action) {
             const modal = document.getElementById('roleModal');
@@ -263,6 +264,25 @@
         // Close on clicking outside
         document.getElementById('roleModal').addEventListener('click', function(e) {
             if (e.target === this) closeModal();
+        });
+
+        // Auth Awareness Check
+        document.addEventListener('DOMContentLoaded', () => {
+            // Treat user as authenticated if flag is true OR if there's a stored role
+            const isAuth = localStorage.getItem('is_authenticated') === 'true' || localStorage.getItem('registered_role') !== null;
+            const savedRole = localStorage.getItem('registered_role');
+            
+            if (isAuth) {
+                const btnGroup = document.querySelector('.button-group');
+                
+                // Determine the correct dashboard URL
+                const dashboardUrl = (savedRole === 'admin') ? 'admin.html' : 'citizen.html';
+                
+                btnGroup.innerHTML = `
+                    <button class="btn btn-primary" onclick="window.location.href='${dashboardUrl}'">Return to Dashboard</button>
+                    <button class="btn btn-outline" onclick="logoutUser(event)">Log Out</button>
+                `;
+            }
         });
     </script>
 </body>

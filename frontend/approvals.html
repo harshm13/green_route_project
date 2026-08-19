@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Head Admin | Approvals</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <style>
+        /* approvals.css embedded due to file creation constraints */
+        body {
+            background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%);
+            min-height: 100vh;
+        }
+
+        /* Navbar Badge Styling */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #ef4444; /* Soft Red */
+            color: white;
+            font-size: 0.75rem;
+            font-weight: bold;
+            border-radius: 9999px;
+            padding: 0.15rem 0.45rem;
+            margin-left: 0.5rem;
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+            vertical-align: middle;
+            transition: transform 0.3s ease;
+        }
+
+        .approvals-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+
+        .page-header h1 {
+            font-size: 2.25rem;
+            color: var(--eco-text-dark, #1f2937);
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .page-header p {
+            color: var(--eco-text-light, #6b7280);
+            font-size: 1.1rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Grid Layout for Cards */
+        .requests-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Eco-Glassmorphism Card */
+        .request-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .request-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 35px rgba(16, 185, 129, 0.1);
+        }
+
+        /* Card Content Styling */
+        .req-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .req-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-right: 1rem;
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);
+        }
+
+        .req-info h3 {
+            margin: 0;
+            font-size: 1.25rem;
+            color: #1f2937;
+        }
+
+        .req-info p {
+            margin: 0;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .req-details {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: rgba(243, 244, 246, 0.5);
+            border-radius: 8px;
+        }
+
+        .req-detail-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .req-detail-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .req-detail-label {
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .req-detail-value {
+            color: #1f2937;
+            font-weight: 600;
+        }
+
+        /* Action Buttons */
+        .req-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 0.75rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            border: none;
+            outline: none;
+        }
+
+        .btn-approve {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+        }
+
+        .btn-approve:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(16, 185, 129, 0.35);
+        }
+
+        .btn-reject {
+            background: transparent;
+            color: #ef4444;
+            border: 2px solid #ef4444;
+        }
+
+        .btn-reject:hover {
+            background: rgba(239, 68, 68, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* Animation for removing cards */
+        .fade-out {
+            animation: fadeOutCard 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes fadeOutCard {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.95); }
+            100% { opacity: 0; transform: scale(0.9); display: none; }
+        }
+
+        /* Empty State */
+        .empty-state {
+            display: none;
+            text-align: center;
+            padding: 4rem 2rem;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .empty-state.active {
+            display: block;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="brand">🌿 EcoRoute</div>
+        <div class="nav-links">
+            <a href="index.html"><span class="icon">🏠</span> Home</a>
+            <a href="admin.html"><span class="icon">📊</span> Dashboard</a>
+            <a href="approvals.html" class="active"><span class="icon">✅</span> Approvals <span class="badge" id="nav-badge">0</span></a>
+            <a href="#" onclick="logoutUser(event)" class="btn-logout"><span class="icon">🚪</span> Logout</a>
+        </div>
+    </nav>
+
+    <main class="approvals-container">
+        <div class="page-header">
+            <h1>Head Admin Approvals</h1>
+            <p>Review and manage pending administrative access requests.</p>
+        </div>
+
+        <div class="empty-state" id="empty-state">
+            <div class="empty-icon">✅</div>
+            <h2>All Caught Up!</h2>
+            <p>There are currently no pending access requests to review.</p>
+        </div>
+
+        <div class="requests-grid" id="requests-container">
+            <!-- Cards will be dynamically injected here by JS -->
+        </div>
+    </main>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Authorization Check (Mock: In a real app, verify token/role)
+            const currentRole = localStorage.getItem('registered_role');
+            const isApproved = localStorage.getItem('is_approved');
+            
+            // For this demo, we assume the Head Admin is currently viewing this page.
+            if (currentRole !== 'admin' || isApproved === 'false') {
+                // In a real app, redirect here. For demo, we let it slide so user can test.
+            }
+
+            // 2. Mock Data generation
+            let pendingRequests = [
+                { id: 1, name: "Aarav Patel", emp_id: "ADM-102", email: "aarav.p@eco.gov" },
+                { id: 2, name: "Priya Sharma", emp_id: "ADM-105", email: "priya.s@eco.gov" }
+            ];
+
+            // Check if the user recently registered an admin account that is pending
+            const localName = localStorage.getItem('registered_name');
+            const localRole = localStorage.getItem('registered_role');
+            const localApproved = localStorage.getItem('is_approved');
+            
+            if (localRole === 'admin' && localApproved === 'false') {
+                pendingRequests.push({
+                    id: 3,
+                    name: localName || "Local User",
+                    emp_id: localStorage.getItem('admin_id') || "ADM-NEW",
+                    email: localStorage.getItem('registered_email') || "local@eco.gov",
+                    isLocal: true // flag to update localStorage on approval
+                });
+            }
+
+            const container = document.getElementById('requests-container');
+            const badge = document.getElementById('nav-badge');
+            const adminNavBadge = document.getElementById('nav-badge'); // Update the navbar badge
+            const emptyState = document.getElementById('empty-state');
+
+            // 3. Render logic
+            function updateBadge() {
+                const count = pendingRequests.length;
+                badge.textContent = count;
+                
+                // If there's a badge in the main admin.html nav (mocking it here since we share classes)
+                if (count === 0) {
+                    badge.style.display = 'none';
+                    emptyState.classList.add('active');
+                } else {
+                    badge.style.display = 'inline-flex';
+                    emptyState.classList.remove('active');
+                }
+            }
+
+            function renderCards() {
+                container.innerHTML = '';
+                
+                if (pendingRequests.length === 0) {
+                    updateBadge();
+                    return;
+                }
+
+                pendingRequests.forEach(req => {
+                    const initials = req.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
+
+                    const card = document.createElement('div');
+                    card.className = 'request-card';
+                    card.id = `req-${req.id}`;
+                    card.innerHTML = `
+                        <div class="req-header">
+                            <div class="req-avatar">${initials}</div>
+                            <div class="req-info">
+                                <h3>${req.name}</h3>
+                                <p>Pending Admin Access</p>
+                            </div>
+                        </div>
+                        <div class="req-details">
+                            <div class="req-detail-item">
+                                <span class="req-detail-label">Employee ID</span>
+                                <span class="req-detail-value">${req.emp_id}</span>
+                            </div>
+                            <div class="req-detail-item">
+                                <span class="req-detail-label">Email</span>
+                                <span class="req-detail-value">${req.email}</span>
+                            </div>
+                        </div>
+                        <div class="req-actions">
+                            <button class="btn-action btn-reject" onclick="handleReject(${req.id}, '${req.name}')">Reject</button>
+                            <button class="btn-action btn-approve" onclick="handleApprove(${req.id}, '${req.name}', ${req.isLocal ? 'true' : 'false'})">Approve</button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+                
+                updateBadge();
+            }
+
+            renderCards();
+
+            // 4. SweetAlert2 Actions
+            window.handleApprove = function(id, name, isLocal) {
+                Swal.fire({
+                    title: 'Approve Request?',
+                    text: `Are you sure you want to grant Admin access to ${name}?`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#10b981',
+                    cancelButtonColor: '#9ca3af',
+                    confirmButtonText: 'Yes, Approve',
+                    background: 'rgba(255,255,255,0.95)',
+                    backdrop: `rgba(0,0,0,0.4)`
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        if (isLocal) {
+                            localStorage.setItem('is_approved', 'true');
+                        }
+
+                        removeCard(id);
+
+                        Swal.fire({
+                            title: 'Approved!',
+                            text: `${name} has been granted access.`,
+                            icon: 'success',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                    }
+                });
+            };
+
+            window.handleReject = function(id, name) {
+                Swal.fire({
+                    title: 'Reject Request?',
+                    text: `Are you sure you want to deny access for ${name}?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#9ca3af',
+                    confirmButtonText: 'Yes, Reject',
+                    background: 'rgba(255,255,255,0.95)',
+                    backdrop: `rgba(0,0,0,0.4)`
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        removeCard(id);
+
+                        Swal.fire({
+                            title: 'Rejected',
+                            text: `${name}'s request has been denied.`,
+                            icon: 'error',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                    }
+                });
+            };
+
+            function removeCard(id) {
+                const card = document.getElementById(`req-${id}`);
+                if (card) {
+                    card.classList.add('fade-out');
+                    pendingRequests = pendingRequests.filter(r => r.id !== id);
+                    setTimeout(() => {
+                        card.remove();
+                        updateBadge();
+                    }, 500);
+                }
+            }
+        });
+    </script>
+    <script src="auth.js"></script>
+</body>
+</html>

@@ -3,14 +3,14 @@
 
 :root {
   /* Soft & Friendly Color Palette */
-  --eco-mint-light: #F0FDF4; /* Light mint background */
-  --eco-green-primary: #10B981; /* Pastel emerald primary */
-  --eco-green-hover: #059669; /* Darker emerald for hover states */
+  --eco-mint-light: #F0FDF4;
+  --eco-green-primary: #10B981;
+  --eco-green-hover: #059669;
   --eco-green-light: #A7F3D0;
   --eco-white: #FFFFFF;
   
-  --eco-text-dark: #1F2937; /* Soft dark slate for text */
-  --eco-text-light: #6B7280; /* Medium gray for secondary text */
+  --eco-text-dark: #1F2937;
+  --eco-text-light: #6B7280;
   --eco-border: #E5E7EB;
   
   /* Modern soft shapes and shadows */
@@ -30,6 +30,92 @@ body {
   color: var(--eco-text-dark);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  padding-top: 100px; /* Account for floating navbar */
+}
+
+/* ---------------------------------- */
+/* FLOATING ECO-ISLAND NAVBAR         */
+/* ---------------------------------- */
+.navbar {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 900px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: var(--border-radius-pill);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem 2rem;
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+.navbar .brand {
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--eco-green-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: var(--eco-text-dark);
+  font-weight: 500;
+  font-size: 0.95rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius-pill);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.nav-links a i, .nav-links a span.icon {
+  font-size: 1.1rem;
+}
+
+.nav-links a:hover {
+  color: var(--eco-green-hover);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.nav-links a.active {
+  background: var(--eco-green-primary);
+  color: var(--eco-white);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+}
+
+.nav-links a.active:hover {
+  background: var(--eco-green-hover);
+}
+
+.nav-links a.btn-logout {
+  color: #EF4444; /* Soft red */
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 0.5rem 1rem;
+}
+
+.nav-links a.btn-logout:hover {
+  background: #FEF2F2;
+  color: #DC2626;
+  border-color: #FECACA;
 }
 
 /* Utilities */
