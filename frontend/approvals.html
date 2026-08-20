@@ -10,7 +10,6 @@
     <style>
         /* approvals.css embedded due to file creation constraints */
         body {
-            background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%);
             min-height: 100vh;
         }
 
@@ -215,6 +214,8 @@
             margin-bottom: 1rem;
             opacity: 0.8;
         }
+
+        .empty-state-img { max-height: 200px; width: 100%; object-fit: cover; border-radius: 16px; margin-bottom: 1.5rem; box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
     </style>
 </head>
 <body>
@@ -235,7 +236,7 @@
         </div>
 
         <div class="empty-state" id="empty-state">
-            <div class="empty-icon">✅</div>
+            <img src="assets/6.jpeg" alt="All Caught Up" class="empty-state-img">
             <h2>All Caught Up!</h2>
             <p>There are currently no pending access requests to review.</p>
         </div>

@@ -46,4 +46,4 @@ Since the frontend is built with pure Vanilla JavaScript and utilizes mocked JSO
 
 1. Clone the repository:
    ```bash
-   git clone [https://github.com/harshm13/green_route_project.git](https://github.com/harshm13/green_route_project.git)
+   git clone https://github.com/harshm13/green_route_project.git

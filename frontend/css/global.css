@@ -24,13 +24,15 @@
 }
 
 body {
-  margin: 0;
-  font-family: 'Outfit', sans-serif;
-  background-color: var(--eco-mint-light);
-  color: var(--eco-text-dark);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  padding-top: 100px; /* Account for floating navbar */
+    margin: 0;
+    font-family: 'Outfit', 'Poppins', sans-serif;
+    /* The Magic Overlay: Adds an 85% opaque white/mint tint over the image */
+    background: linear-gradient(rgba(240, 253, 244, 0.85), rgba(255, 255, 255, 0.95)), url('../assets/1.jpeg') no-repeat bottom center;
+    background-size: cover;
+    background-attachment: fixed;
+    color: var(--eco-text-dark);
+    -webkit-font-smoothing: antialiased;
+    padding-top: 100px;
 }
 
 /* ---------------------------------- */
