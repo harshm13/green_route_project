@@ -1,3 +1,4 @@
+<!-- admin.html  -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -11,6 +12,9 @@
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/admin.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#10B981">
+    <link rel="apple-touch-icon" href="assets/logo.png">
 </head>
 
 <body>
@@ -31,9 +35,17 @@
             <!-- Map Controls -->
             <div class="control-section">
                 <h3>Map Controls</h3>
-                <button id="toggle-heatmap-btn" class="btn btn-secondary full-width mb-2">Show Predictive
-                    Heatmap</button>
+                
+                <h4>Filter Bins</h4>
+                <div class="filter-pills-container">
+                    <button class="filter-pill active" data-filter="all">All</button>
+                    <button class="filter-pill" data-filter="critical">Critical (>80%)</button>
+                    <button class="filter-pill" data-filter="eco">Eco/Recyclable</button>
+                </div>
+
+                <button id="toggle-heatmap-btn" class="btn btn-secondary full-width mb-2">Show Predictive Heatmap</button>
                 <button id="draw-route-btn" class="btn btn-primary full-width mb-2">Generate Priority Route</button>
+                <button id="dispatch-fleet-btn" class="btn btn-primary full-width mb-2" style="display: none; background: #FF9800; border-color: #F57C00;">🚚 Dispatch Fleet</button>
                 <button id="reset-route-btn" class="btn btn-secondary full-width">Reset Map</button>
             </div>
 
@@ -54,6 +66,14 @@
                         <span id="stat-labor" class="impact-value">0h</span>
                     </div>
                 </div>
+            </div>
+
+            <!-- Manager Leaderboard -->
+            <div class="control-section">
+                <h3>Manager Leaderboard</h3>
+                <ul class="admin-leaderboard-list" id="admin-leaderboard">
+                    <!-- Populated by JS -->
+                </ul>
             </div>
 
             <!-- AI Operations Assistant -->
@@ -80,8 +100,21 @@
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <!-- Leaflet Heatmap Plugin -->
     <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="auth.js"></script>
     <script type="module" src="js/admin.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(registration => {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }).catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+    </script>
 </body>
 
 </html>

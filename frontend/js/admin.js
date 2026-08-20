@@ -7,6 +7,13 @@ let heatmapLayer = null;
 let allBins = [];
 let isHeatmapVisible = false;
 
+// Mock Admin Leaderboard Data
+const mockAdmins = [
+  { name: "Kushal (You)", efficiency: 98, routes: 45 },
+  { name: "Aarav P.", efficiency: 92, routes: 38 },
+  { name: "Priya S.", efficiency: 85, routes: 30 }
+];
+
 /**
  * Initializes the Leaflet map centered on Ahmedabad.
  */
@@ -53,22 +60,7 @@ function getMarkerIcon(bin) {
 async function loadAndPlotBins() {
   allBins = await fetchBins();
 
-  // Plot markers
-  allBins.forEach((bin) => {
-    const icon = getMarkerIcon(bin);
-    const marker = L.marker([bin.lat, bin.lng], { icon: icon }).addTo(map);
-
-    // Add popup with new fields
-    marker.bindPopup(`
-            <strong>${bin.location_name}</strong><br>
-            Fill Level: <b>${bin.fill_level}%</b><br>
-            Priority: <b>${bin.priority_level}</b><br>
-            Waste Type: ${bin.waste_type}<br>
-            Bin ID: #${bin.id}
-        `);
-
-    markers.push(marker);
-  });
+  filterBins('all'); // Plot initially
 
   // Initialize Heatmap layer (hidden by default)
   // Map bin data to [lat, lng, intensity] array for leaflet.heat
@@ -82,6 +74,41 @@ async function loadAndPlotBins() {
     blur: 15,
     maxZoom: 14,
     gradient: { 0.4: "blue", 0.6: "lime", 0.8: "yellow", 1.0: "red" },
+  });
+}
+
+/**
+ * Filters and re-draws markers based on filter type
+ */
+function filterBins(type) {
+  // Clear existing markers
+  markers.forEach(marker => map.removeLayer(marker));
+  markers = [];
+
+  let filteredBins = [];
+  if (type === 'all') {
+    filteredBins = allBins;
+  } else if (type === 'critical') {
+    filteredBins = allBins.filter(bin => bin.fill_level >= 80);
+  } else if (type === 'eco') {
+    filteredBins = allBins.filter(bin => bin.waste_type === 'Recyclable');
+  }
+
+  // Plot markers
+  filteredBins.forEach((bin) => {
+    const icon = getMarkerIcon(bin);
+    const marker = L.marker([bin.lat, bin.lng], { icon: icon }).addTo(map);
+
+    // Add popup with new fields
+    marker.bindPopup(`
+            <strong>${bin.location_name}</strong><br>
+            Fill Level: <b>${bin.fill_level}%</b><br>
+            Priority: <b>${bin.priority_level}</b><br>
+            Waste Type: ${bin.waste_type}<br>
+            Bin ID: #${bin.id}
+        `);
+
+    markers.push(marker);
   });
 }
 
@@ -137,6 +164,9 @@ function drawPriorityRoute() {
 
   // Update Sustainability Ticker with mocked calculations
   updateSustainabilityTicker(priorityBins.length, allBins.length);
+
+  // Show dispatch fleet button
+  document.getElementById('dispatch-fleet-btn').style.display = 'block';
 }
 
 /**
@@ -168,6 +198,7 @@ function resetMap() {
   document.getElementById("stat-fuel").textContent = "0L";
   document.getElementById("stat-co2").textContent = "0kg";
   document.getElementById("stat-labor").textContent = "0h";
+  document.getElementById('dispatch-fleet-btn').style.display = 'none';
   map.setView([23.035, 72.55], 12);
 }
 
@@ -209,12 +240,65 @@ function appendChatMessage(text, sender) {
   chatWindow.scrollTop = chatWindow.scrollHeight; // Auto-scroll to bottom
 }
 
+/**
+ * Renders the Admin Leaderboard
+ */
+function renderAdminLeaderboard() {
+  const container = document.getElementById("admin-leaderboard");
+  if (!container) return;
+
+  // Sort by efficiency (highest first)
+  const sortedAdmins = [...mockAdmins].sort((a, b) => b.efficiency - a.efficiency);
+
+  container.innerHTML = "";
+  sortedAdmins.forEach((admin, index) => {
+    const li = document.createElement("li");
+    li.className = "admin-lb-item";
+    
+    li.innerHTML = `
+      <div class="admin-lb-item-left">
+        <span class="admin-rank-badge">${index + 1}</span>
+        <span class="admin-name">${admin.name}</span>
+      </div>
+      <span class="admin-stat">${admin.efficiency}% Eff</span>
+    `;
+    
+    container.appendChild(li);
+  });
+}
+
 // Initialization
 document.addEventListener("DOMContentLoaded", () => {
   initMap();
   loadAndPlotBins();
+  renderAdminLeaderboard();
 
   // Event listeners
+  document.querySelectorAll('.filter-pill').forEach(pill => {
+    pill.addEventListener('click', (e) => {
+      // Toggle active class
+      document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+      e.target.classList.add('active');
+      
+      // Filter bins
+      const filterType = e.target.getAttribute('data-filter');
+      filterBins(filterType);
+    });
+  });
+
+  document
+    .getElementById("dispatch-fleet-btn")
+    .addEventListener("click", () => {
+      Swal.fire({
+        icon: 'success',
+        title: 'Fleet Dispatched!',
+        text: 'The optimized route has been sent to the drivers\' mobile devices.',
+        confirmButtonColor: '#10b981'
+      }).then(() => {
+        resetMap();
+      });
+    });
+
   document
     .getElementById("toggle-heatmap-btn")
     .addEventListener("click", toggleHeatmap);

@@ -493,3 +493,25 @@ body {
 .citizen-nav .nav-links a.btn-logout {
     padding: 0.4rem 0.6rem;
 }
+
+/* =========================================
+   RESPONSIVE DESIGN: CITIZEN APP ON DESKTOP
+   ========================================= */
+@media (min-width: 769px) {
+    body {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+    }
+    
+    .app-container {
+        width: 100%;
+        max-width: 420px;
+        margin: 0 auto;
+    }
+    
+    .citizen-nav {
+        width: 100%;
+        max-width: 420px;
+    }
+}

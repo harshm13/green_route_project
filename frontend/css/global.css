@@ -199,3 +199,31 @@ body {
   from { opacity: 0; transform: translateY(-20px) scale(0.95); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+/* =========================================
+   RESPONSIVE DESIGN: NAVBAR & MODALS
+   ========================================= */
+@media (max-width: 768px) {
+  .navbar {
+    width: 95%;
+    padding: 0.6rem 1rem;
+  }
+  
+  /* Hide text labels, keep only icons */
+  .nav-links a {
+    font-size: 0;
+    padding: 0.4rem;
+  }
+  
+  .nav-links a .icon, 
+  .nav-links a i {
+    font-size: 1.2rem;
+    margin: 0;
+  }
+  
+  /* Modal responsive adjustments */
+  .modal-content {
+    width: 95%;
+    padding: 1.5rem;
+  }
+}

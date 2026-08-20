@@ -7,6 +7,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/admin.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#10B981">
+    <link rel="apple-touch-icon" href="assets/logo.png">
     <style>
         /* approvals.css embedded due to file creation constraints */
         body {
@@ -416,5 +419,16 @@
         });
     </script>
     <script src="auth.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(registration => {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }).catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+    </script>
 </body>
 </html>
