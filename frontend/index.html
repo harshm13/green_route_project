@@ -6,9 +6,6 @@
     <title>Smart Waste Management - Keep Our World Clean 🌱</title>
     <meta name="description" content="Join the smart waste revolution. Earn rewards for recycling or manage city fleets with ease.">
     <link rel="stylesheet" href="css/global.css">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#10B981">
-    <link rel="apple-touch-icon" href="assets/logo.png">
     <style>
         .hero-section {
             min-height: 100vh;
@@ -286,17 +283,6 @@
                 `;
             }
         });
-    </script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').then(registration => {
-                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                }).catch(err => {
-                    console.log('ServiceWorker registration failed: ', err);
-                });
-            });
-        }
     </script>
 </body>
 </html>

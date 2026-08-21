@@ -1,3 +1,4 @@
+// admin.js 
 import { fetchBins } from "./api.js";
 
 let map;

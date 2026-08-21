@@ -5,170 +5,180 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Green Citizen App</title>
     <!-- Modern Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/citizen.css">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#10B981">
-    <link rel="apple-touch-icon" href="assets/logo.png">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
-    <nav class="navbar citizen-nav">
-        <div class="brand">🌿 EcoRoute</div>
-        <div class="nav-links">
-            <a href="index.html" title="Home"><span class="icon">🏠</span></a>
-            <a href="citizen.html" class="active" title="Dashboard"><span class="icon">📊</span> App</a>
-            <a href="#" onclick="logoutUser(event)" class="btn-logout" title="Logout"><span class="icon">🚪</span></a>
-        </div>
-    </nav>
-    <div class="app-container">
+    
+    <div class="dashboard-wrapper">
         
-        <!-- Header / Profile Panel (Fades in first) -->
-        <header class="glass-panel header-card fade-in delay-1">
-        <div class="profile-header">
-    <div class="avatar" id="rank-icon">🌱</div>
-    <div>
-        <h2 style="display: flex; align-items: center; gap: 8px;">
-            Kushal 
-            <span class="streak-badge" id="streak-badge">🔥 <span id="streak-count">1</span></span>
-        </h2>
-        <p class="subtitle">Silver Oak - Block C</p>
-        <div class="rank-badge-display" id="user-rank" onclick="openRankProgress()" style="cursor: pointer;">Novice Sprout ℹ️</div>
-    </div>
-</div>
-            
-            <div class="points-showcase">
-                <p>Total Green Points</p>
-                <h1 id="points-display">500</h1>
-            </div>
+        <!-- VERTICAL SIDEBAR -->
+        <aside class="sidebar bento-card">
+            <div class="brand-icon">🌿</div>
+            <nav class="side-nav">
+                <a href="index.html" class="nav-item" title="Home">🏠</a>
+                <a href="citizen.html" class="nav-item active" title="Dashboard">📊</a>
+                <a href="#" onclick="logoutUser(event)" class="nav-item" title="Logout">🚪</a>
+            </nav>
+        </aside>
 
-            <!-- Progress Bar -->
-            <div class="progress-section">
-                <div class="progress-bg">
-                    <div class="progress-fill" id="progress-bar"></div>
+        <!-- MAIN CONTENT AREA -->
+        <main class="main-content">
+            
+            <!-- TOP HEADER -->
+            <header class="top-header">
+                <h2>Overview</h2>
+                <div class="user-mini">
+                    <span style="font-weight: 600; color: #333;">Kushal Bhatt</span>
+                    <div class="avatar-mini">🌱</div>
                 </div>
-                <p class="progress-text">Next reward at <span id="next-milestone-text">1000</span> pts</p>
-            </div>
-        </header>
+            </header>
 
-        <!-- Grid for Action Buttons (Fades in second) -->
-        <div class="action-grid fade-in delay-2">
-            <!-- Added pulse-btn class here -->
-            <div class="glass-panel action-btn pulse-btn" id="scan-btn" onclick="simulateQRScan()">
-                <div class="icon-circle">📷</div>
-                <h3>Scan QR</h3>
-                <p>Log Waste</p>
-            </div>
-            
-            <div class="glass-panel action-btn" id="rewards-card">
-                <div class="icon-circle">🏆</div>
-                <h3>Rewards</h3>
-                <p>View Status</p>
-            </div>
-        </div>
-        <div class="banner-card fade-in delay-2"><img src="assets/7.jpeg" alt="Keep sorting!" class="reward-banner-img"></div>
-        <!-- Daily Missions Panel -->
-<div class="glass-panel fade-in delay-3" style="margin-bottom: 20px;">
-    <h3 class="section-title">Daily Missions</h3>
-    <ul class="rewards-list">
-        <li class="reward-item locked" id="mission-1">
-            <span class="reward-icon">🎯</span>
-            <div class="reward-details">
-                <h4>First Scan of the Day</h4>
-                <p>Reward: +50 Bonus Pts</p>
-            </div>
-            <span class="status-badge" id="mission-1-badge">Pending</span>
-        </li>
-    </ul>
-</div>
-
-        <!-- Reward Catalog Panel (Fades in third) -->
-        <div class="glass-panel fade-in delay-3">
-            <h3 class="section-title">Reward Catalog</h3>
-            <ul class="rewards-list" id="rewards-list">
-                <!-- 1000 Point Milestone -->
-                <li class="reward-item locked" id="reward-1000">
-                    <span class="reward-icon">☕</span>
-                    <div class="reward-details">
-                        <h4>Free Campus Coffee</h4>
-                        <p>Unlocks at 1000 pts</p>
-                    </div>
-                    <span class="status-badge">Locked</span>
-                </li>
+            <!-- BENTO BOX GRID -->
+            <div class="bento-grid">
                 
-                <!-- 1500 Point Milestone -->
-                <li class="reward-item locked" id="reward-1500">
-                    <span class="reward-icon">👕</span>
-                    <div class="reward-details">
-                        <h4>Silver Oak T-Shirt</h4>
-                        <p>Unlocks at 1500 pts</p>
+                <!-- LEFT SIDE (Spans 2 columns) -->
+                <div class="grid-left">
+                    
+                    <!-- Top Row: Profile & Points -->
+                    <div class="stats-row">
+                        <div class="bento-card profile-card">
+                            <h3 class="card-title">Profile Info</h3>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-top: 15px;">
+                                <!-- ID added back here so the emoji changes when you rank up! -->
+                                <div class="avatar-large" id="rank-icon">🌱</div>
+                                <div>
+                                    <h4 style="color: #333; margin-bottom: 4px;">Kushal Bhatt</h4>
+                                    <p style="color: #888; font-size: 0.85rem;">Silver Oak University</p>
+                                    <!-- ID added back, plus the new interactive 'i' button -->
+                                    <span class="status-badge" id="user-rank" onclick="openRankProgress()" style="margin-top: 5px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: 0.2s;">
+                                        Novice Sprout <span class="info-btn" title="Click to view Rank System">i</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bento-card points-card">
+                            <h3 class="card-title">Total Green Points</h3>
+                            <h1 id="points-display" style="font-size: 2.8rem; color: #27ae60; margin: 10px 0;">500</h1>
+                            <div class="progress-bg">
+                                <div class="progress-fill" id="progress-bar"></div>
+                            </div>
+                            <p class="progress-text" style="color: #888; margin-top: 8px;">Next reward at <span id="next-milestone-text">1000</span> pts</p>
+                        </div>
                     </div>
-                    <span class="status-badge">Locked</span>
-                </li>
-            </ul>
-        </div>
 
-        <!-- Leaderboard Panel (Fades in fourth) -->
-        <div class="glass-panel fade-in delay-4">
-            <h3 class="section-title">Campus Leaderboard</h3>
-            <ul class="leaderboard-list" id="leaderboard-list">
-                <!-- Data populated by JS -->
-            </ul>
-        </div>
-        <!-- ... Your existing leaderboard panel ... -->
-        
-        <!-- 1. Scan QR Success Modal -->
-        <div id="scan-modal" class="modal-overlay hidden">
-            <div class="modal-content glass-panel">
-                <div class="modal-icon">🌍</div>
-                <h2 id="scan-modal-text">Super Recycler!</h2>
-                <p>+100 Points added!</p>
-            </div>
-        </div>
+                    <!-- Middle Banner (Like the yellow Pro banner in your image) -->
+                    <div class="bento-card action-banner fade-in delay-2">
+                        <div class="banner-text">
+                            <h3 style="color: #3e4f24; font-size: 1.4rem; margin-bottom: 5px;">Log Waste & Earn Rewards</h3>
+                            <p style="color: #4a5d23; font-size: 0.9rem;">Scan smart bins around campus to increase your level.</p>
+                        </div>
+                        <div class="banner-actions">
+                            <button class="btn-banner pulse-btn" id="scan-btn" onclick="simulateQRScan()">📷 Scan QR</button>
+                            <button class="btn-banner-outline" id="rewards-card">🏆 Rewards</button>
+                        </div>
+                    </div>
 
-        <!-- 2. Claim Reward Celebration Modal -->
-        <div id="claim-modal" class="modal-overlay hidden">
-            <div class="modal-content claim-style">
-                <div class="modal-icon bounce">🎉</div>
-                <h2>Reward Claimed!</h2>
-                <p id="claim-modal-text">You got a Free Campus Coffee!</p>
-                <button class="action-btn-small" onclick="closeClaimModal()">Awesome!</button>
-            </div>
-        </div>
-        <!-- 3. Rank Up Celebration Modal -->
-<div id="rank-up-modal" class="modal-overlay hidden">
-    <div class="modal-content claim-style">
-        <div class="modal-icon bounce" id="rank-up-icon">⚔️</div>
-        <h2>RANK UP!</h2>
-        <p>You have been promoted to <br><span id="rank-up-text" style="font-size: 1.4rem; color: #fff;">Nature Knight</span>!</p>
-        <button class="action-btn-small" onclick="closeRankModal()">Continue</button>
+                    <!-- Bottom Row: Quests & Rewards -->
+                    <div class="bottom-row">
+                        <div class="bento-card fade-in delay-3">
+                            <h3 class="card-title">Daily Quests</h3>
+                            <ul class="rewards-list" id="quest-list">
+                                <!-- Populated by JS -->
+                            </ul>
+                        </div>
+                        
+                        <div class="bento-card fade-in delay-3">
+                            <h3 class="card-title">Reward Catalog</h3>
+                            <ul class="rewards-list" id="rewards-list">
+                                <li class="reward-item locked" id="reward-1000">
+                                    <span class="reward-icon">☕</span>
+                                    <div class="reward-details">
+                                        <h4>Campus Coffee</h4>
+                                        <p>Unlocks at 1000 pts</p>
+                                    </div>
+                                    <span class="status-badge">Locked</span>
+                                </li>
+                                <li class="reward-item locked" id="reward-1500">
+                                    <span class="reward-icon">👕</span>
+                                    <div class="reward-details">
+                                        <h4>SOU T-Shirt</h4>
+                                        <p>Unlocks at 1500 pts</p>
+                                    </div>
+                                    <span class="status-badge">Locked</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                </div> <!-- End Left Side -->
+
+                <!-- RIGHT SIDE (Spans 1 column) -->
+                <div class="grid-right">
+                    
+                    <div class="bento-card map-card fade-in delay-4">
+                        <h3 class="card-title">Smart Bin Locator</h3>
+                        <p style="font-size: 0.8rem; color: #888; margin-bottom: 15px;">Find empty bins on campus</p>
+                        <div id="campus-map" style="height: 220px; width: 100%; border-radius: 16px; z-index: 1;"></div>
+                    </div>
+
+                    <div class="bento-card leaderboard-card fade-in delay-4">
+                        <h3 class="card-title">Campus Leaderboard</h3>
+                        <ul class="leaderboard-list" id="leaderboard-list">
+                            <!-- Data populated by JS -->
+                        </ul>
+                    </div>
+
+                </div> <!-- End Right Side -->
+
+            </div> <!-- End Bento Grid -->
+        </main>
     </div>
-</div>
-<!-- 4. Rank Progress Tier List Modal -->
-<div id="rank-progress-modal" class="modal-overlay hidden">
-    <div class="modal-content glass-panel" style="max-width: 360px; padding: 20px;">
-        <h2 style="color: #3e4f24; margin-bottom: 15px; font-size: 1.5rem;">Rank Tiers</h2>
-        <ul class="rewards-list" id="rank-progress-list" style="text-align: left; width: 100%; max-height: 50vh; overflow-y: auto;">
-            <!-- Populated by JavaScript -->
-        </ul>
-        <button class="action-btn-small" style="margin-top: 20px; background: #6b8e23; color: #fff;" onclick="closeRankProgress()">Close</button>
-    </div>
-</div>
-    </div> <!-- This is the closing tag of your app-container -->
 
+    <!-- MODALS (Hidden) -->
+    <div id="scan-modal" class="modal-overlay hidden">
+        <div class="modal-content bento-card">
+            <div class="modal-icon" style="font-size: 4rem;">🌍</div>
+            <h2 id="scan-modal-text">Super Recycler!</h2>
+            <p>+50 Points added!</p>
+        </div>
+    </div>
+
+    <div id="claim-modal" class="modal-overlay hidden">
+        <div class="modal-content bento-card claim-style">
+            <div class="modal-icon bounce" style="font-size: 4rem;">🎉</div>
+            <h2>Reward Claimed!</h2>
+            <p id="claim-modal-text">You got a Free Campus Coffee!</p>
+            <button class="btn-banner" onclick="closeClaimModal()" style="margin-top: 15px;">Awesome!</button>
+        </div>
+    </div>
+    
+    <div id="rank-up-modal" class="modal-overlay hidden">
+        <div class="modal-content bento-card claim-style">
+            <div class="modal-icon bounce" id="rank-up-icon" style="font-size: 4rem;">⚔️</div>
+            <h2>RANK UP!</h2>
+            <p>You have been promoted to <br><span id="rank-up-text" style="font-size: 1.4rem; color: #27ae60;">Nature Knight</span>!</p>
+            <button class="btn-banner" onclick="closeRankModal()" style="margin-top: 15px;">Continue</button>
+        </div>
+    </div>
+    
+    <div id="rank-progress-modal" class="modal-overlay hidden">
+        <div class="modal-content bento-card" style="max-width: 360px; padding: 30px;">
+            <h2 style="color: #333; margin-bottom: 15px;">Rank Tiers</h2>
+            <ul class="rewards-list" id="rank-progress-list" style="text-align: left; width: 100%; max-height: 50vh; overflow-y: auto;">
+                <!-- Populated by JavaScript -->
+            </ul>
+            <button class="btn-banner" style="margin-top: 20px; width: 100%;" onclick="closeRankProgress()">Close</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="auth.js"></script>
     <script src="js/citizen.js"></script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').then(registration => {
-                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                }).catch(err => {
-                    console.log('ServiceWorker registration failed: ', err);
-                });
-            });
-        }
-    </script>
 </body>
 </html>
