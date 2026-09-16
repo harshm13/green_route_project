@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GreenRoute - Head Admin Approvals & Access Governance 🛡️</title>
+    
+    <!-- Fonts & Core Styles -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/admin.css">
+    
+    <style>
+        body {
+            background: radial-gradient(circle at top left, #F0FDF4, #E0F2FE, #F8FAFC);
+            min-height: 100vh;
+            padding-top: 90px;
+        }
+
+        .approvals-container {
+            max-width: 1100px;
+            margin: 1.5rem auto 4rem;
+            padding: 0 1.5rem;
+        }
+
+        .approvals-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid rgba(229, 231, 235, 0.8);
+            padding-bottom: 1.25rem;
+        }
+
+        .approvals-header h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--eco-text-dark);
+            margin: 0 0 0.4rem 0;
+            letter-spacing: -0.02em;
+        }
+
+        .approvals-header p {
+            color: var(--eco-text-light);
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        /* View Tabs */
+        .tabs-header {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid var(--eco-border);
+            border-radius: var(--border-radius-pill);
+            padding: 0.6rem 1.4rem;
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: var(--eco-text-muted);
+            cursor: pointer;
+            transition: all 0.25s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab-btn:hover {
+            background: #FFFFFF;
+            color: var(--eco-green-dark);
+        }
+
+        .tab-btn.active {
+            background: var(--eco-green-dark);
+            color: #FFFFFF;
+            border-color: var(--eco-green-dark);
+            box-shadow: 0 4px 12px rgba(6, 78, 59, 0.25);
+        }
+
+        /* Requests Grid */
+        .requests-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .request-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: var(--border-radius-card);
+            padding: 1.75rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .request-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(16, 185, 129, 0.12);
+            border-color: var(--eco-green-light);
+        }
+
+        .req-head {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1.25rem;
+        }
+
+        .req-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--eco-green-primary) 0%, var(--eco-green-dark) 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            font-weight: 800;
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);
+        }
+
+        .req-details-box {
+            background: #F9FAFB;
+            border-radius: 12px;
+            padding: 0.9rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #F3F4F6;
+        }
+
+        .req-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+        }
+
+        .req-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .req-lbl {
+            color: #6B7280;
+            font-weight: 500;
+        }
+
+        .req-val {
+            color: #1F2937;
+            font-weight: 700;
+        }
+
+        .req-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: auto;
+        }
+
+        .btn-approve {
+            flex: 1;
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 0.7rem;
+            border-radius: var(--border-radius-pill);
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+            transition: all 0.2s;
+        }
+
+        .btn-approve:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(16, 185, 129, 0.35);
+        }
+
+        .btn-reject {
+            flex: 1;
+            background: transparent;
+            color: #EF4444;
+            border: 2px solid #EF4444;
+            padding: 0.65rem;
+            border-radius: var(--border-radius-pill);
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-reject:hover {
+            background: #FEF2F2;
+            transform: translateY(-2px);
+        }
+
+        /* Empty State */
+        .empty-state-box {
+            display: none;
+            text-align: center;
+            padding: 4rem 2rem;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: var(--border-radius-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            max-width: 600px;
+            margin: 2rem auto;
+        }
+
+        .empty-state-box.active {
+            display: block;
+        }
+
+        .empty-state-img {
+            max-height: 180px;
+            width: auto;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Audit Table */
+        .audit-table-container {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: var(--border-radius-card);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Floating Navbar -->
+    <nav class="navbar">
+        <a href="index.html" class="brand">
+            <img src="assets/logo.svg" alt="GreenRoute">
+        </a>
+        <div class="nav-links">
+            <a href="citizen.html"><span class="icon">🌱</span> Citizen App</a>
+            <a href="admin.html"><span class="icon">🗺️</span> Command Center</a>
+            <a href="approvals.html" class="active"><span class="icon">✅</span> Approvals <span class="badge" id="nav-badge">0</span></a>
+            <a href="#" onclick="logoutUser(event)" class="btn-logout"><span class="icon">🚪</span> Logout</a>
+        </div>
+    </nav>
+
+    <main class="approvals-container">
+        
+        <div class="approvals-header">
+            <div>
+                <h1>Head Authority Access Governance</h1>
+                <p>Verify facilities credentials and grant or revoke Command Center access.</p>
+            </div>
+            <div>
+                <button class="btn btn-outline btn-sm" onclick="seedNewPendingRequest()">+ Simulate New Request</button>
+            </div>
+        </div>
+
+        <!-- View Switcher -->
+        <div class="tabs-header">
+            <button class="tab-btn active" id="tab-pending" onclick="switchView('pending')">
+                <span>📋</span> Pending Requests (<span id="count-pending-label">0</span>)
+            </button>
+            <button class="tab-btn" id="tab-audit" onclick="switchView('audit')">
+                <span>🛡️</span> Security Audit Log (<span id="count-audit-label">0</span>)
+            </button>
+        </div>
+
+        <!-- Empty State (When All Caught Up) -->
+        <div class="empty-state-box" id="empty-state">
+            <img src="assets/empty-state.svg" alt="All Caught Up" class="empty-state-img">
+            <h2 style="font-size: 1.6rem; color: #1F2937; margin: 0 0 0.5rem 0;">All Requests Resolved!</h2>
+            <p style="color: #6B7280; margin: 0 0 1.5rem 0; font-size: 0.95rem;">
+                There are no pending administrator account requests awaiting Head Authority review.
+            </p>
+            <button class="btn btn-primary btn-sm" onclick="seedNewPendingRequest()">Simulate Incoming Admin Request</button>
+        </div>
+
+        <!-- Pending Cards Grid -->
+        <div class="requests-grid" id="requests-grid">
+            <!-- Dynamically populated -->
+        </div>
+
+        <!-- Audit Log View -->
+        <div class="audit-table-container hidden" id="audit-table-container" style="display: none;">
+            <table class="bin-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Applicant</th>
+                        <th>Employee ID</th>
+                        <th>Email</th>
+                        <th>Department</th>
+                        <th>Governance Action</th>
+                    </tr>
+                </thead>
+                <tbody id="audit-table-body">
+                    <!-- Dynamically populated -->
+                </tbody>
+            </table>
+        </div>
+
+    </main>
+
+    <!-- SweetAlert2 & Controller -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="auth.js"></script>
+    <script src="js/data-service.js"></script>
+    <script>
+        let currentView = 'pending'; // 'pending' | 'audit'
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderApprovals();
+        });
+
+        window.addEventListener('greenroute:backend-status', () => {
+            if (currentView === 'pending') {
+                renderApprovals();
+            } else {
+                renderAuditLog();
+            }
+        });
+
+        function switchView(view) {
+            currentView = view;
+            document.getElementById('tab-pending').classList.toggle('active', view === 'pending');
+            document.getElementById('tab-audit').classList.toggle('active', view === 'audit');
+
+            const grid = document.getElementById('requests-grid');
+            const emptyState = document.getElementById('empty-state');
+            const auditContainer = document.getElementById('audit-table-container');
+
+            if (view === 'pending') {
+                auditContainer.style.display = 'none';
+                renderApprovals();
+            } else {
+                grid.style.display = 'none';
+                emptyState.classList.remove('active');
+                auditContainer.style.display = 'block';
+                renderAuditLog();
+            }
+        }
+
+        function renderApprovals() {
+            const pending = GreenRouteData.getPendingApprovals();
+            const grid = document.getElementById('requests-grid');
+            const emptyState = document.getElementById('empty-state');
+            const badge = document.getElementById('nav-badge');
+            const countLabel = document.getElementById('count-pending-label');
+            const auditLabel = document.getElementById('count-audit-label');
+
+            const auditLog = GreenRouteData.getAuditLog();
+            auditLabel.innerText = auditLog.length;
+            countLabel.innerText = pending.length;
+            badge.innerText = pending.length;
+
+            if (pending.length === 0) {
+                badge.style.display = 'none';
+                grid.style.display = 'none';
+                emptyState.classList.add('active');
+                return;
+            }
+
+            badge.style.display = 'inline-flex';
+            emptyState.classList.remove('active');
+            grid.style.display = 'grid';
+            grid.innerHTML = '';
+
+            pending.forEach(req => {
+                const initials = req.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
+                const card = document.createElement('div');
+                card.className = 'request-card';
+                card.id = `req-card-${req.id}`;
+                card.innerHTML = `
+                    <div class="req-head">
+                        <div class="req-avatar">${initials}</div>
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.15rem; color: #1F2937;">${req.name}</h3>
+                            <span style="font-size: 0.8rem; color: #059669; font-weight: 700;">Pending Verification</span>
+                        </div>
+                    </div>
+
+                    <div class="req-details-box">
+                        <div class="req-row">
+                            <span class="req-lbl">Facility / Emp ID</span>
+                            <span class="req-val">${req.emp_id}</span>
+                        </div>
+                        <div class="req-row">
+                            <span class="req-lbl">Official Email</span>
+                            <span class="req-val">${req.email}</span>
+                        </div>
+                        <div class="req-row">
+                            <span class="req-lbl">Department</span>
+                            <span class="req-val">${req.department || 'Campus Facilities'}</span>
+                        </div>
+                        <div class="req-row">
+                            <span class="req-lbl">Request Date</span>
+                            <span class="req-val">${req.date || 'Today'}</span>
+                        </div>
+                    </div>
+
+                    <div class="req-actions">
+                        <button class="btn-reject" onclick="handleReject(${req.id}, '${req.name}')">Reject</button>
+                        <button class="btn-approve" onclick="handleApprove(${req.id}, '${req.name}')">Grant Access</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function handleApprove(id, name) {
+            Swal.fire({
+                title: 'Grant Admin Access?',
+                text: `Are you sure you want to authorize ${name} for Fleet Command Center controls?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#10B981',
+                cancelButtonColor: '#9CA3AF',
+                confirmButtonText: 'Yes, Authorize',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    GreenRouteData.approveAdmin(id);
+                    renderApprovals();
+
+                    Swal.fire({
+                        title: 'Authorized!',
+                        text: `${name} has been granted Command Center access.`,
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                }
+            });
+        }
+
+        function handleReject(id, name) {
+            Swal.fire({
+                title: 'Reject Request?',
+                text: `Are you sure you want to deny administrative access for ${name}?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#EF4444',
+                cancelButtonColor: '#9CA3AF',
+                confirmButtonText: 'Yes, Deny',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    GreenRouteData.rejectAdmin(id);
+                    renderApprovals();
+
+                    Swal.fire({
+                        title: 'Request Denied',
+                        text: `Access request for ${name} was rejected.`,
+                        icon: 'info',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                }
+            });
+        }
+
+        function renderAuditLog() {
+            const auditLog = GreenRouteData.getAuditLog();
+            const body = document.getElementById('audit-table-body');
+            body.innerHTML = '';
+
+            if (auditLog.length === 0) {
+                body.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #6B7280; padding: 2rem;">No audit records logged yet. Approve or reject a request to populate.</td></tr>`;
+                return;
+            }
+
+            auditLog.forEach(log => {
+                const tr = document.createElement('tr');
+                const isApproved = log.action === 'APPROVED';
+                tr.innerHTML = `
+                    <td style="color: #6B7280;">${log.timestamp}</td>
+                    <td style="font-weight: 700;">${log.name}</td>
+                    <td>${log.emp_id}</td>
+                    <td>${log.email}</td>
+                    <td>${log.department || 'Campus Facilities'}</td>
+                    <td>
+                        <span class="status-badge" style="background: ${isApproved ? '#D1FAE5' : '#FEE2E2'}; color: ${isApproved ? '#065F46' : '#991B1B'}; font-weight: 700;">
+                            ${isApproved ? 'APPROVED ✅' : 'DENIED ❌'}
+                        </span>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        async function seedNewPendingRequest() {
+            const approvals = GreenRouteData.getPendingApprovals();
+            const sampleNames = ["Rohan Verma", "Dr. Kavita Rao", "Sameer Desai", "Pooja Hegde"];
+            const chosenName = sampleNames[Math.floor(Math.random() * sampleNames.length)];
+            const randomId = Math.floor(100 + Math.random() * 900);
+
+            const newReq = {
+                id: Date.now(),
+                name: chosenName,
+                emp_id: `ADM-FAC-${randomId}`,
+                email: `${chosenName.toLowerCase().replace(/[^a-z]/g, '.')}${randomId}@sou.edu.in`,
+                department: "Urban Sanitization Unit",
+                date: new Date().toISOString().split('T')[0]
+            };
+
+            if (GreenRouteData.isBackendActive()) {
+                try {
+                    const res = await fetch(`${GreenRouteData.API_BASE}/admin/approvals/seed-request`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: newReq.name,
+                            emp_id: newReq.emp_id,
+                            email: newReq.email,
+                            department: newReq.department
+                        })
+                    });
+                    if (res.ok) {
+                        const saved = await res.json();
+                        newReq.id = saved.id;
+                    }
+                } catch (e) {
+                    console.warn("Backend seed-request skipped:", e);
+                }
+            }
+
+            approvals.push(newReq);
+            localStorage.setItem('gr_approvals', JSON.stringify(approvals));
+            renderApprovals();
+
+            Swal.fire({
+                title: 'New Request Injected',
+                text: `Simulated incoming request from ${chosenName}.`,
+                icon: 'info',
+                timer: 1200,
+                showConfirmButton: false
+            });
+        }
+
+    </script>
+</body>
+</html>

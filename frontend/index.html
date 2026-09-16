@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GreenRoute - Smart Waste Management & Dynamic Fleet Routing 🌱</title>
+    <meta name="description" content="AI-driven IoT waste logistics platform. Optimizing collection routes, predicting bin overflow, and gamifying citizen recycling.">
+    
+    <!-- Google Fonts & Styles -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/global.css">
+    
+    <style>
+        /* Hero Section */
+        .landing-hero {
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 8rem 2rem 4rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Abstract ambient glow shapes */
+        .landing-hero::before {
+            content: '';
+            position: absolute;
+            width: 550px;
+            height: 550px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.18) 0%, rgba(16, 185, 129, 0) 70%);
+            top: 5%;
+            left: 5%;
+            border-radius: 50%;
+            z-index: 0;
+            pointer-events: none;
+            animation: floatGlow 12s ease-in-out infinite alternate;
+        }
+
+        .landing-hero::after {
+            content: '';
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.22) 0%, rgba(56, 189, 248, 0) 70%);
+            bottom: 5%;
+            right: 5%;
+            border-radius: 50%;
+            z-index: 0;
+            pointer-events: none;
+            animation: floatGlow 14s ease-in-out infinite alternate-reverse;
+        }
+
+        @keyframes floatGlow {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(40px, 30px) scale(1.1); }
+        }
+
+        .hero-inner {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(16, 185, 129, 0.12);
+            color: var(--eco-green-dark);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: var(--border-radius-pill);
+            padding: 0.4rem 1.1rem;
+            font-size: 0.88rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 10px rgba(16, 185, 129, 0.08);
+        }
+
+        .hero-headline {
+            font-size: 3.8rem;
+            font-weight: 800;
+            color: var(--eco-text-dark);
+            line-height: 1.15;
+            letter-spacing: -0.03em;
+            margin-bottom: 1.5rem;
+            text-wrap: balance;
+        }
+
+        .hero-headline span {
+            background: linear-gradient(135deg, #059669 0%, #10B981 50%, #34D399 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subheadline {
+            font-size: 1.3rem;
+            color: var(--eco-text-muted);
+            line-height: 1.6;
+            font-weight: 400;
+            max-width: 720px;
+            margin: 0 auto 2.5rem;
+            text-wrap: balance;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1.2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 3.5rem;
+        }
+
+        /* Live Statistics Ticker */
+        .stats-strip {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            max-width: 1050px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: var(--border-radius-soft);
+            padding: 1.5rem 1rem;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--eco-green-primary);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .stat-number {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--eco-green-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--eco-text-light);
+        }
+
+        /* Features Section */
+        .section-container {
+            max-width: 1150px;
+            margin: 4rem auto 6rem;
+            padding: 0 1.5rem;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3.5rem;
+        }
+
+        .section-header h2 {
+            font-size: 2.4rem;
+            font-weight: 800;
+            color: var(--eco-text-dark);
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+        }
+
+        .section-header p {
+            font-size: 1.1rem;
+            color: var(--eco-text-light);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: var(--border-radius-card);
+            padding: 2.2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 40px rgba(16, 185, 129, 0.12);
+            border-color: var(--eco-green-light);
+        }
+
+        .feature-icon-box {
+            width: 58px;
+            height: 58px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(52, 211, 153, 0.25) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--eco-text-dark);
+            margin: 0 0 0.75rem 0;
+        }
+
+        .feature-card p {
+            font-size: 0.95rem;
+            color: var(--eco-text-muted);
+            line-height: 1.6;
+            margin: 0 0 1.5rem 0;
+            flex-grow: 1;
+        }
+
+        .feature-link {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: var(--eco-green-primary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: gap 0.2s;
+        }
+
+        .feature-link:hover {
+            gap: 10px;
+            color: var(--eco-green-hover);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: var(--border-radius-card);
+            padding: 2.8rem;
+            width: 92%;
+            max-width: 580px;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.2);
+            transform: scale(0.92);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1.25rem;
+            right: 1.25rem;
+            background: #F3F4F6;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            font-size: 1.1rem;
+            color: var(--eco-text-light);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            background: #E5E7EB;
+            color: var(--eco-text-dark);
+        }
+
+        .role-cards-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .role-card {
+            background: #F9FAFB;
+            border: 2px solid var(--eco-border);
+            border-radius: var(--border-radius-soft);
+            padding: 1.8rem 1.2rem;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .role-card:hover {
+            border-color: var(--eco-green-primary);
+            background: #FFFFFF;
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.15);
+        }
+
+        .role-card-icon {
+            font-size: 3rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .role-card h4 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--eco-text-dark);
+            margin: 0 0 0.25rem 0;
+        }
+
+        .role-card p {
+            font-size: 0.82rem;
+            color: var(--eco-text-light);
+            margin: 0;
+        }
+
+        @media (max-width: 900px) {
+            .hero-headline { font-size: 2.8rem; }
+            .features-grid { grid-template-columns: 1fr; }
+            .stats-strip { grid-template-columns: 1fr 1fr; }
+            .role-cards-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Floating Island Navbar -->
+    <nav class="navbar">
+        <a href="index.html" class="brand">
+            <img src="assets/logo.svg" alt="GreenRoute Logo">
+        </a>
+        <div class="nav-links">
+            <a href="citizen.html"><span class="icon">🌱</span> Citizen App</a>
+            <a href="admin.html"><span class="icon">🗺️</span> Admin Portal</a>
+            <a href="approvals.html"><span class="icon">✅</span> Approvals</a>
+            <div id="auth-nav-slot">
+                <a href="login.html" class="btn btn-outline btn-sm">Sign In</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <main class="landing-hero">
+        <div class="hero-inner">
+            <div class="hero-badge">
+                <span>🍃</span> IoT & AI Powered Urban Logistics
+            </div>
+            <h1 class="hero-headline">
+                Smart Fleet Routing.<br>
+                <span>Zero Wasted Fuel.</span>
+            </h1>
+            <p class="hero-subheadline">
+                GreenRoute turns static urban collection into a responsive, circular logistics network. Dynamic TSP route planning cuts fleet mileage while gamified recycling rewards citizens.
+            </p>
+            <div class="hero-actions" id="hero-cta-group">
+                <button class="btn btn-primary" onclick="openModal('register')">Get Started Today</button>
+                <button class="btn btn-outline" onclick="openModal('login')">Access Portals</button>
+                <button class="btn btn-outline" onclick="seedDemoAccount('citizen')">Try 1-Click Demo</button>
+            </div>
+        </div>
+
+        <!-- Live Sustainability Impact Strip -->
+        <div class="stats-strip">
+            <div class="stat-card">
+                <div class="stat-number">42</div>
+                <div class="stat-label">Smart IoT Bins Online</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">62.8%</div>
+                <div class="stat-label">Average Fuel Conserved</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">1,480 kg</div>
+                <div class="stat-label">Recycled & Diverted</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">&lt; 15 min</div>
+                <div class="stat-label">Priority Pickup Dispatch</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Feature Showcase -->
+    <section class="section-container">
+        <div class="section-header">
+            <h2>Modernizing Waste with Clean Tech</h2>
+            <p>Designed for university campuses, smart municipalities, and forward-looking communities.</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon-box">🗺️</div>
+                <h3>Dynamic Priority Routing</h3>
+                <p>Calculates optimal turn-by-turn paths visiting only critical (≥ 80%) or high-priority clinic/cafeteria bins (≥ 60%), reducing transit distance by over 60%.</p>
+                <a href="admin.html" class="feature-link">View Fleet Engine →</a>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon-box">🔥</div>
+                <h3>Predictive Heatmaps</h3>
+                <p>Spatial fill-rate density overlays identify historical waste accumulation patterns, allowing dispatchers to deploy trucks proactively before bin overflow.</p>
+                <a href="admin.html" class="feature-link">Inspect Hotspots →</a>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon-box">🏆</div>
+                <h3>Gamified Citizen Rewards</h3>
+                <p>Citizens scan QR codes at smart bins, log segregated materials (Plastic, E-Waste bonus), earn Green Points, and redeem them for free campus perks.</p>
+                <a href="citizen.html" class="feature-link">Open Citizen App →</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Role Selection Modal -->
+    <div class="modal-overlay" id="roleModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">✕</button>
+            <h2 style="font-size: 1.8rem; font-weight: 700; color: var(--eco-text-dark); margin: 0 0 0.5rem; text-align: center;" id="modalTitle">
+                Choose Your Portal
+            </h2>
+            <p style="text-align: center; color: var(--eco-text-light); font-size: 0.95rem; margin-bottom: 1.5rem;">
+                Select how you'd like to interact with GreenRoute.
+            </p>
+            <div class="role-cards-grid">
+                <a href="#" class="role-card" id="citizenLink">
+                    <div class="role-card-icon">🏡</div>
+                    <h4>Citizen Portal</h4>
+                    <p>Log waste, track streaks, and redeem green rewards.</p>
+                </a>
+                <a href="#" class="role-card" id="adminLink">
+                    <div class="role-card-icon">🏢</div>
+                    <h4>Facilities Admin</h4>
+                    <p>Fleet dispatch, priority routing & spatial heatmaps.</p>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="js/data-service.js"></script>
+    <script>
+        function openModal(action) {
+            const modal = document.getElementById('roleModal');
+            const title = document.getElementById('modalTitle');
+            const citizenLink = document.getElementById('citizenLink');
+            const adminLink = document.getElementById('adminLink');
+
+            if (action === 'register') {
+                title.textContent = 'Create an Account';
+            } else {
+                title.textContent = 'Sign In to GreenRoute';
+            }
+
+            citizenLink.href = `login.html?action=${action}&role=citizen`;
+            adminLink.href = `login.html?action=${action}&role=admin`;
+
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('roleModal').classList.remove('active');
+        }
+
+        document.getElementById('roleModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        // Dynamic Auth State Detection
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = getCurrentUser();
+            const authSlot = document.getElementById('auth-nav-slot');
+            const ctaGroup = document.getElementById('hero-cta-group');
+
+            if (user.isAuthenticated) {
+                const targetUrl = user.role === 'admin' ? 'admin.html' : 'citizen.html';
+                
+                authSlot.innerHTML = `
+                    <a href="${targetUrl}" class="btn btn-primary btn-sm">My Dashboard</a>
+                    <a href="#" onclick="logoutUser(event)" class="btn btn-outline btn-sm">Log Out</a>
+                `;
+
+                ctaGroup.innerHTML = `
+                    <a href="${targetUrl}" class="btn btn-primary">Return to ${user.role === 'admin' ? 'Admin Command Center' : 'Citizen Dashboard'}</a>
+                    <button class="btn btn-outline" onclick="logoutUser(event)">Switch Account</button>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

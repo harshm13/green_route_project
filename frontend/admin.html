@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GreenRoute - Fleet Logistics Command Center 🗺️</title>
+    
+    <!-- Google Fonts & Stylesheets -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="admin-body">
+
+    <!-- Top Floating Navbar -->
+    <nav class="navbar">
+        <a href="index.html" class="brand">
+            <img src="assets/logo.svg" alt="GreenRoute">
+        </a>
+        <div class="nav-links">
+            <a href="citizen.html"><span class="icon">🌱</span> Citizen App</a>
+            <a href="admin.html" class="active"><span class="icon">🗺️</span> Command Center</a>
+            <a href="approvals.html"><span class="icon">✅</span> Approvals <span class="badge" id="admin-pending-badge">0</span></a>
+            <a href="#" onclick="logoutUser(event)" class="btn-logout"><span class="icon">🚪</span> Logout</a>
+        </div>
+    </nav>
+
+    <div class="admin-layout">
+        
+        <!-- LEFT CONTROL & OPERATIONS SIDEBAR -->
+        <aside class="admin-sidebar">
+            <div class="sidebar-header">
+                <div>
+                    <h2>Fleet Operations</h2>
+                    <span style="font-size: 0.78rem; color: #6B7280;">Silver Oak University Logistics</span>
+                </div>
+                <div class="system-status-pill">
+                    <span class="pulse-dot"></span>
+                    <span id="backend-status-text">Smart Engine</span>
+                </div>
+            </div>
+
+            <!-- Routing Mode & Dispatch Controls -->
+            <div class="control-card">
+                <div class="control-card-title">
+                    <span>🗺️ Map Visualization</span>
+                    <span style="font-size: 0.75rem; color: #10B981; font-weight: 700;">LIVE</span>
+                </div>
+                
+                <!-- View Mode: Route vs Heatmap -->
+                <div class="mode-toggle-group">
+                    <button class="mode-btn active" id="btn-mode-route" onclick="setMapMode('route')">
+                        <span>🗺️</span> Collection Route
+                    </button>
+                    <button class="mode-btn" id="btn-mode-heat" onclick="setMapMode('heat')">
+                        <span>🔥</span> Fill Heatmap
+                    </button>
+                </div>
+
+                <!-- Priority Filters -->
+                <label style="font-size: 0.75rem; font-weight: 700; color: #6B7280; display: block; margin-bottom: 4px; text-transform: uppercase;">
+                    Route Optimization Rules:
+                </label>
+                <div class="filter-pills-row">
+                    <button class="filter-pill-btn active" onclick="setRouteFilter('priority', this)">⚡ Dynamic Priority</button>
+                    <button class="filter-pill-btn" onclick="setRouteFilter('critical', this)">🚨 Critical (≥80%)</button>
+                    <button class="filter-pill-btn" onclick="setRouteFilter('priority_zones', this)">🏥 Clinic & Cafe</button>
+                    <button class="filter-pill-btn" onclick="setRouteFilter('all_full', this)">📦 All Full</button>
+                </div>
+
+                <button class="btn btn-primary" style="width: 100%; padding: 0.65rem; font-size: 0.92rem; border-radius: 10px;" onclick="calculateAndDisplayRoute()">
+                    ⚡ Recalculate Optimal Route
+                </button>
+            </div>
+
+            <!-- Sustainability Impact Ticker -->
+            <div class="control-card">
+                <div class="control-card-title">
+                    <span>🌱 Sustainability Ticker</span>
+                    <span style="font-size: 0.75rem; color: #059669; font-weight: 700;">SDG 11 &amp; 13</span>
+                </div>
+                <div class="ticker-grid">
+                    <div class="ticker-box">
+                        <div class="ticker-val" id="stat-fuel">0.0 L</div>
+                        <div class="ticker-lbl">Fuel Saved</div>
+                    </div>
+                    <div class="ticker-box">
+                        <div class="ticker-val" id="stat-co2">0.0 kg</div>
+                        <div class="ticker-lbl">CO₂ Prevented</div>
+                    </div>
+                    <div class="ticker-box">
+                        <div class="ticker-val" id="stat-time">0.0 hr</div>
+                        <div class="ticker-lbl">Labor Saved</div>
+                    </div>
+                    <div class="ticker-box">
+                        <div class="ticker-val" id="stat-gain">0%</div>
+                        <div class="ticker-lbl">Efficiency Gain</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Operations Assistant -->
+            <div class="control-card ai-assistant-card">
+                <div class="control-card-title">
+                    <span>🤖 AI Operations Assistant</span>
+                    <span style="font-size: 0.72rem; background: #D1FAE5; color: #065F46; padding: 2px 6px; border-radius: 6px; font-weight: 700;">GPT IoT</span>
+                </div>
+
+                <div class="ai-chips-row">
+                    <div class="ai-chip" onclick="askAiPrompt('Which bins need immediate pickup?')">🚨 Critical Bins?</div>
+                    <div class="ai-chip" onclick="askAiPrompt('Estimate fuel savings')">⛽ Fuel Savings</div>
+                    <div class="ai-chip" onclick="askAiPrompt('Check clinic zone status')">🏥 Clinic Status</div>
+                    <div class="ai-chip" onclick="askAiPrompt('Suggest truck dispatch order')">🚛 Dispatch Order</div>
+                </div>
+
+                <div class="ai-chat-window" id="ai-chat-window">
+                    <div class="ai-bubble bot">
+                        Hello Administrator! I am parsing live IoT telemetry for Silver Oak University campus bins. Ask me any logistics question or click a prompt above.
+                    </div>
+                </div>
+
+                <div class="ai-input-bar">
+                    <input type="text" id="ai-user-input" class="ai-input" placeholder="Ask AI dispatcher..." onkeypress="if(event.key==='Enter') submitAiMessage()">
+                    <button class="ai-send-btn" onclick="submitAiMessage()">Send</button>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- RIGHT MAIN STAGE: LEAFLET MAP & FLEET MANIFEST -->
+        <main class="admin-main-stage">
+            
+            <!-- Floating Top Banner on Map -->
+            <div class="map-status-floating-banner">
+                <div class="map-status-text">
+                    <span id="route-indicator-dot" style="width: 10px; height: 10px; border-radius: 50%; background: #10B981; display: inline-block;"></span>
+                    <span id="route-status-msg">Optimal Route Active: 5 Stops Selected</span>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-outline btn-sm" onclick="toggleManifestDrawer()">
+                        📋 View Fleet Manifest (<span id="manifest-count">0</span>)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Leaflet Map Container -->
+            <div id="map" class="map-viewport"></div>
+
+            <!-- Collapsible Fleet Manifest & Bin Controls Drawer -->
+            <div class="manifest-drawer" id="manifest-drawer">
+                <div class="manifest-title">
+                    <span>Campus Bins Status &amp; Telemetry Controller</span>
+                    <button onclick="toggleManifestDrawer()" style="background: none; border: none; font-size: 0.9rem; font-weight: 700; color: #6B7280; cursor: pointer;">✕ Hide</button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="bin-table">
+                        <thead>
+                            <tr>
+                                <th>Stop #</th>
+                                <th>Bin Location</th>
+                                <th>Zone Type</th>
+                                <th>Fill Level</th>
+                                <th>Status</th>
+                                <th>Adjust Level</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bin-table-body">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Scripts: Leaflet, Leaflet.heat & Admin Logic -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <script src="auth.js"></script>
+    <script src="js/data-service.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>

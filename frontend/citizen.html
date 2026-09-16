@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GreenRoute - Citizen App 🌱</title>
+    <!-- Fonts & Styles -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/citizen.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        /* Interactive Scanner Viewfinder Styles */
+        .scanner-viewfinder {
+            position: relative;
+            width: 100%;
+            height: 220px;
+            background: #111827;
+            border-radius: 16px;
+            overflow: hidden;
+            margin: 1rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed #10B981;
+        }
+
+        .scanner-beam {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, #34D399, transparent);
+            box-shadow: 0 0 15px #10B981;
+            animation: scanLaser 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes scanLaser {
+            0% { top: 10%; }
+            100% { top: 90%; }
+        }
+
+        .qr-placeholder {
+            width: 130px;
+            height: 130px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .qr-corner {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-color: #10B981;
+            border-style: solid;
+        }
+        .qr-corner.tl { top: -2px; left: -2px; border-width: 3px 0 0 3px; }
+        .qr-corner.tr { top: -2px; right: -2px; border-width: 3px 3px 0 0; }
+        .qr-corner.bl { bottom: -2px; left: -2px; border-width: 0 0 3px 3px; }
+        .qr-corner.br { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; }
+
+        .waste-type-selector {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 1rem 0;
+            text-align: left;
+        }
+
+        .waste-chip {
+            padding: 10px 12px;
+            border: 2px solid #E5E7EB;
+            border-radius: 12px;
+            background: #F9FAFB;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+        }
+
+        .waste-chip:hover {
+            border-color: var(--eco-green-light);
+            background: #F0FDF4;
+        }
+
+        .waste-chip.selected {
+            border-color: #10B981;
+            background: #D1FAE5;
+            color: #064E3B;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+        }
+
+        /* Voucher Modal */
+        .voucher-card {
+            border: 2px dashed #10B981;
+            background: #F0FDF4;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .voucher-code {
+            font-family: monospace;
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #047857;
+            letter-spacing: 2px;
+            margin: 0.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="dashboard-wrapper">
+        
+        <!-- VERTICAL SIDEBAR -->
+        <aside class="sidebar bento-card">
+            <a href="index.html" class="brand-icon" title="GreenRoute Home">
+                <img src="assets/bin-icon.svg" alt="GreenRoute" style="height: 38px; width: 38px;">
+            </a>
+            <nav class="side-nav">
+                <a href="index.html" class="nav-item" title="Home">🏠</a>
+                <a href="citizen.html" class="nav-item active" title="Citizen Dashboard">🌱</a>
+                <a href="admin.html" class="nav-item" title="Admin Portal">🗺️</a>
+                <a href="#" onclick="logoutUser(event)" class="nav-item" title="Logout">🚪</a>
+            </nav>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="main-content">
+            
+            <!-- TOP HEADER -->
+            <header class="top-header">
+                <div>
+                    <h2>Citizen Green Dashboard</h2>
+                    <p style="color: #6B7280; font-size: 0.9rem; margin-top: 2px;">Silver Oak University • Smart Segregation Hub</p>
+                </div>
+                <div class="user-mini">
+                    <div class="avatar-mini" id="header-avatar">🌱</div>
+                    <div>
+                        <span id="header-user-name" style="font-weight: 700; color: #1F2937; display: block; font-size: 0.95rem;">Kushal Bhatt</span>
+                        <span id="header-user-streak" style="font-size: 0.78rem; color: #059669; font-weight: 600;">🔥 3-Day Streak</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- BENTO BOX GRID -->
+            <div class="bento-grid">
+                
+                <!-- LEFT SIDE (Spans 2 columns) -->
+                <div class="grid-left">
+                    
+                    <!-- Top Row: Profile & Points -->
+                    <div class="stats-row">
+                        <div class="bento-card profile-card">
+                            <h3 class="card-title">My Eco Profile</h3>
+                            <div style="display: flex; align-items: center; gap: 14px; margin-top: 10px;">
+                                <div class="avatar-large" id="rank-icon">🌱</div>
+                                <div>
+                                    <h4 id="profile-name" style="color: #1F2937; margin-bottom: 2px; font-size: 1.15rem;">Kushal Bhatt</h4>
+                                    <p id="profile-campus" style="color: #6B7280; font-size: 0.85rem; margin-bottom: 6px;">Silver Oak Campus</p>
+                                    <span class="status-badge" id="user-rank" onclick="openRankProgress()" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: 0.2s;">
+                                        Novice Sprout <span class="info-btn" title="View Tier Thresholds">ℹ️</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bento-card points-card">
+                            <h3 class="card-title">Total Green Points</h3>
+                            <h1 id="points-display" style="font-size: 2.8rem; color: #10B981; margin: 8px 0; font-weight: 800;">500</h1>
+                            <div class="progress-bg">
+                                <div class="progress-fill" id="progress-bar"></div>
+                            </div>
+                            <p class="progress-text" style="color: #6B7280; margin-top: 8px; font-size: 0.85rem;">
+                                Next tier reward at <strong id="next-milestone-text">1000</strong> pts
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Middle Banner: Interactive Scan Trigger -->
+                    <div class="bento-card action-banner fade-in delay-2">
+                        <div class="banner-text">
+                            <h3 style="color: #064E3B; font-size: 1.35rem; margin-bottom: 4px; font-weight: 700;">Segregate Waste & Earn Points</h3>
+                            <p style="color: #047857; font-size: 0.9rem;">Scan smart bins on campus to log recycling and maintain your daily streak.</p>
+                        </div>
+                        <div class="banner-actions">
+                            <button class="btn-banner pulse-btn" id="scan-btn" onclick="openScannerModal()">📷 Scan Smart Bin</button>
+                            <button class="btn-banner-outline" id="rewards-nav-btn" onclick="scrollToRewards()">🏆 Perks Catalog</button>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Row: Daily Quests & Rewards -->
+                    <div class="bottom-row">
+                        <div class="bento-card fade-in delay-3">
+                            <h3 class="card-title">Daily Missions</h3>
+                            <ul class="rewards-list" id="quest-list">
+                                <!-- Populated dynamically by JS -->
+                            </ul>
+                        </div>
+                        
+                        <div class="bento-card fade-in delay-3" id="rewards-section">
+                            <h3 class="card-title">Perks & Rewards</h3>
+                            <ul class="rewards-list" id="rewards-list">
+                                <!-- Populated dynamically by JS -->
+                            </ul>
+                        </div>
+                    </div>
+
+                </div> <!-- End Left Side -->
+
+                <!-- RIGHT SIDE (Spans 1 column) -->
+                <div class="grid-right">
+                    
+                    <div class="bento-card map-card fade-in delay-4">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h3 class="card-title" style="margin-bottom: 0;">Campus Smart Bins</h3>
+                            <span class="status-badge" style="background: #E0F2FE; color: #0284C7;">Live IoT Map</span>
+                        </div>
+                        <p style="font-size: 0.82rem; color: #6B7280; margin-bottom: 12px;">Locate empty bins nearby to recycle.</p>
+                        <div id="campus-map" style="height: 230px; width: 100%; border-radius: 16px; z-index: 1;"></div>
+                    </div>
+
+                    <div class="bento-card leaderboard-card fade-in delay-4">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <h3 class="card-title" style="margin-bottom: 0;">Campus Leaderboard</h3>
+                            <span style="font-size: 0.78rem; color: #10B981; font-weight: 700;">Live Rankings</span>
+                        </div>
+                        <ul class="leaderboard-list" id="leaderboard-list">
+                            <!-- Populated dynamically by JS -->
+                        </ul>
+                    </div>
+
+                </div> <!-- End Right Side -->
+
+            </div> <!-- End Bento Grid -->
+        </main>
+    </div>
+
+    <!-- 1. INTERACTIVE QR SCANNER MODAL -->
+    <div id="interactive-scan-modal" class="modal-overlay hidden">
+        <div class="modal-content bento-card" style="max-width: 440px; text-align: left; padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="color: #1F2937; margin: 0; font-size: 1.25rem;">📷 Scan Smart Bin</h3>
+                <button onclick="closeScannerModal()" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #9CA3AF;">✕</button>
+            </div>
+
+            <div class="scanner-viewfinder">
+                <div class="scanner-beam"></div>
+                <div class="qr-placeholder">
+                    <div class="qr-corner tl"></div>
+                    <div class="qr-corner tr"></div>
+                    <div class="qr-corner bl"></div>
+                    <div class="qr-corner br"></div>
+                    <span style="font-size: 3rem;">📲</span>
+                </div>
+            </div>
+
+            <!-- Target Bin Selector -->
+            <label style="font-size: 0.85rem; font-weight: 600; color: #374151; display: block; margin-bottom: 4px;">Detected Smart Bin:</label>
+            <select id="scan-bin-select" class="form-input" style="width: 100%; margin-bottom: 12px; padding: 8px 12px; font-size: 0.9rem; border-radius: 10px; border: 1px solid #D1D5DB;">
+                <!-- Populated by JS -->
+            </select>
+
+            <!-- Waste Segregation Category Selector -->
+            <label style="font-size: 0.85rem; font-weight: 600; color: #374151; display: block; margin-bottom: 4px;">Select Segregated Material:</label>
+            <div class="waste-type-selector">
+                <div class="waste-chip selected" onclick="selectWasteType('plastic', this)">
+                    <span>🧴</span> Plastic (+10%)
+                </div>
+                <div class="waste-chip" onclick="selectWasteType('e-waste', this)">
+                    <span>🔋</span> E-Waste (+50%)
+                </div>
+                <div class="waste-chip" onclick="selectWasteType('organic', this)">
+                    <span>🍏</span> Organic (+15%)
+                </div>
+                <div class="waste-chip" onclick="selectWasteType('paper', this)">
+                    <span>📦</span> Paper / Boxes
+                </div>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="confirmScanRecycle()">
+                Log Recycling & Collect Points ✨
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. REWARD CLAIM / VOUCHER MODAL -->
+    <div id="claim-modal" class="modal-overlay hidden">
+        <div class="modal-content bento-card claim-style" style="max-width: 400px; text-align: center;">
+            <div class="modal-icon bounce" style="font-size: 3.5rem;">🎉</div>
+            <h2 id="claim-title" style="color: #1F2937; margin: 8px 0;">Reward Claimed!</h2>
+            <p id="claim-modal-text" style="color: #4B5563; font-size: 0.92rem;">Show this QR voucher code at the campus counter to redeem.</p>
+            
+            <div class="voucher-card">
+                <div style="font-size: 0.8rem; font-weight: 700; color: #047857; text-transform: uppercase;">Campus Voucher Pass</div>
+                <div class="voucher-code" id="voucher-code-display">GR-COFFEE-882</div>
+                <div style="font-size: 0.75rem; color: #065F46;">Valid for 7 days • Non-transferable</div>
+            </div>
+
+            <button class="btn btn-primary" onclick="closeClaimModal()" style="width: 100%;">Done & Return</button>
+        </div>
+    </div>
+    
+    <!-- 3. RANK UP CELEBRATION MODAL -->
+    <div id="rank-up-modal" class="modal-overlay hidden">
+        <div class="modal-content bento-card claim-style" style="max-width: 380px; text-align: center;">
+            <div class="modal-icon bounce" id="rank-up-icon" style="font-size: 4rem;">⚔️</div>
+            <h2 style="color: #1F2937; margin: 8px 0;">LEVEL UP!</h2>
+            <p style="color: #4B5563;">You have earned enough Green Points to be promoted to:</p>
+            <div id="rank-up-text" style="font-size: 1.5rem; font-weight: 800; color: #10B981; margin: 10px 0;">Nature Knight</div>
+            <button class="btn btn-primary" onclick="closeRankModal()" style="width: 100%; margin-top: 10px;">Continue Eco Journey</button>
+        </div>
+    </div>
+    
+    <!-- 4. RANK TIERS PROGRESS MODAL -->
+    <div id="rank-progress-modal" class="modal-overlay hidden">
+        <div class="modal-content bento-card" style="max-width: 380px; padding: 25px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="color: #1F2937; margin: 0;">Green Rank Tiers</h3>
+                <button onclick="closeRankProgress()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #9CA3AF;">✕</button>
+            </div>
+            <ul class="rewards-list" id="rank-progress-list" style="text-align: left; width: 100%; max-height: 50vh; overflow-y: auto;">
+                <!-- Populated dynamically -->
+            </ul>
+            <button class="btn btn-outline" style="margin-top: 18px; width: 100%;" onclick="closeRankProgress()">Close</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="auth.js"></script>
+    <script src="js/data-service.js"></script>
+    <script src="js/citizen.js"></script>
+</body>
+</html>

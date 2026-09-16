@@ -1,0 +1,5 @@
+[
+  { "id": 101, "name": "Aarav Patel", "points": 1250, "badges": ["Recycle Master", "Early Bird"] },
+  { "id": 102, "name": "Diya Shah", "points": 980, "badges": ["Eco Warrior"] },
+  { "id": 103, "name": "Rohan Desai", "points": 850, "badges": ["Compost King"] }
+]
