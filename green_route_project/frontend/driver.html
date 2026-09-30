@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GreenRoute - Driver Companion Cab Portal 🚚</title>
+    
+    <!-- Google Fonts & Leaflet Styles -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="css/global.css">
+    
+    <style>
+        :root {
+            --driver-bg: #0F172A;
+            --driver-card: rgba(30, 41, 59, 0.85);
+            --driver-border: rgba(255, 255, 255, 0.12);
+            --driver-accent: #10B981;
+            --driver-accent-glow: rgba(16, 185, 129, 0.4);
+            --driver-text: #F8FAFC;
+            --driver-text-muted: #94A3B8;
+        }
+
+        body.driver-body {
+            background: #090D16;
+            color: var(--driver-text);
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            padding-top: 80px;
+            min-height: 100vh;
+        }
+
+        /* Top High-Tech Cockpit Navbar */
+        .driver-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--driver-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+            z-index: 1000;
+        }
+
+        .driver-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: #10B981;
+            font-weight: 800;
+            font-size: 1.25rem;
+        }
+
+        .driver-hud-strip {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .hud-item {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .hud-val {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #38BDF8;
+        }
+
+        .hud-lbl {
+            font-size: 0.72rem;
+            color: var(--driver-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Cockpit Grid Layout */
+        .cockpit-container {
+            display: grid;
+            grid-template-columns: 380px 1fr 340px;
+            gap: 1.25rem;
+            padding: 1.25rem;
+            height: calc(100vh - 100px);
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 1200px) {
+            .cockpit-container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+        }
+
+        /* Cockpit Cards */
+        .cockpit-card {
+            background: var(--driver-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--driver-border);
+            border-radius: 18px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        /* Active Stop Section */
+        .stop-progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .stop-progress-badge {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34D399;
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .active-stop-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #FFFFFF;
+            margin: 0 0 0.5rem 0;
+            line-height: 1.2;
+        }
+
+        .active-stop-zone {
+            display: inline-block;
+            background: rgba(245, 158, 11, 0.2);
+            color: #FBBF24;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .gauge-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.25rem;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .gauge-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.88rem;
+            margin-bottom: 6px;
+        }
+
+        .gauge-bar-bg {
+            background: #334155;
+            height: 10px;
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+
+        .gauge-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10B981, #EF4444);
+            width: 80%;
+            transition: width 0.4s ease;
+        }
+
+        .btn-driver-action {
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            padding: 1rem;
+            font-size: 1.05rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 8px 25px var(--driver-accent-glow);
+            transition: all 0.25s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            margin-top: auto;
+        }
+
+        .btn-driver-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(16, 185, 129, 0.6);
+        }
+
+        .maneuver-box {
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 12px;
+            padding: 0.85rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1rem;
+        }
+
+        .maneuver-icon {
+            font-size: 1.8rem;
+        }
+
+        /* Center Map View */
+        .driver-map-stage {
+            position: relative;
+            border-radius: 18px;
+            overflow: hidden;
+            border: 1px solid var(--driver-border);
+        }
+
+        #driver-map {
+            width: 100%;
+            height: 100%;
+            min-height: 400px;
+        }
+
+        .map-overlay-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 500;
+            pointer-events: none;
+        }
+
+        .map-control-btn {
+            pointer-events: auto;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--driver-border);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            backdrop-filter: blur(12px);
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .map-control-btn:hover {
+            background: #1E293B;
+            border-color: #10B981;
+        }
+
+        .map-control-btn.active {
+            background: #10B981;
+            color: #0F172A;
+        }
+
+        /* Right Manifest List */
+        .manifest-scroll-list {
+            overflow-y: auto;
+            flex: 1;
+            margin-top: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-right: 4px;
+        }
+
+        .manifest-item {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s;
+        }
+
+        .manifest-item.active {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: #10B981;
+        }
+
+        .manifest-item.completed {
+            opacity: 0.45;
+            text-decoration: line-through;
+        }
+
+        .stop-num {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: #334155;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 800;
+            margin-right: 10px;
+        }
+
+        .manifest-item.active .stop-num {
+            background: #10B981;
+            color: #0F172A;
+        }
+
+        .truck-sim-pin {
+            font-size: 1.8rem;
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.6));
+            transition: all 0.4s linear;
+        }
+    </style>
+</head>
+<body class="driver-body">
+
+    <!-- Top Cockpit Navigation Bar -->
+    <nav class="driver-navbar">
+        <a href="index.html" class="driver-brand">
+            <span>🚚</span> GreenRoute Driver Cab
+        </a>
+
+        <div class="driver-hud-strip">
+            <div class="hud-item">
+                <span class="hud-val" id="hud-progress">Stop 0 of 0</span>
+                <span class="hud-lbl">Manifest Progress</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-val" id="hud-distance">0.0 km</span>
+                <span class="hud-lbl">Road Distance</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-val" id="hud-duration">0.0 mins</span>
+                <span class="hud-lbl">Est. Driving Time</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-val" id="hud-truck-fill">0%</span>
+                <span class="hud-lbl">Truck Payload</span>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+            <a href="admin.html" class="map-control-btn" style="text-decoration: none;">🗺️ Admin Dispatch</a>
+            <a href="#" onclick="logoutUser(event)" class="map-control-btn" style="text-decoration: none;">🚪 Exit</a>
+        </div>
+    </nav>
+
+    <!-- Cockpit Main Area -->
+    <div class="cockpit-container">
+
+        <!-- 1. LEFT CARD: ACTIVE TARGET STOP & ACTIONS -->
+        <aside class="cockpit-card">
+            <div class="stop-progress-header">
+                <span class="stop-progress-badge" id="current-badge">
+                    <span>📍</span> TARGET STOP
+                </span>
+                <span style="font-size: 0.8rem; color: #94A3B8;" id="routing-engine-tag">OSRM Driving</span>
+            </div>
+
+            <h2 class="active-stop-title" id="active-stop-name">Loading Target...</h2>
+            <div>
+                <span class="active-stop-zone" id="active-stop-zone">ACADEMIC ZONE</span>
+            </div>
+
+            <!-- Turn-by-Turn Instruction Banner -->
+            <div class="maneuver-box">
+                <span class="maneuver-icon" id="maneuver-icon">⬆️</span>
+                <div>
+                    <div style="font-size: 0.75rem; color: #7DD3FC; text-transform: uppercase; font-weight: 700;">Next Turn Maneuver</div>
+                    <div style="font-size: 0.95rem; font-weight: 700; color: #FFFFFF;" id="maneuver-text">Proceed on campus route</div>
+                </div>
+            </div>
+
+            <!-- Target Bin Fill & Volume Gauge -->
+            <div class="gauge-container">
+                <div class="gauge-row">
+                    <span style="color: #94A3B8;">Target Fill Level:</span>
+                    <strong style="color: #F8FAFC;" id="active-fill-level">0%</strong>
+                </div>
+                <div class="gauge-bar-bg" style="margin-bottom: 12px;">
+                    <div class="gauge-bar-fill" id="active-fill-bar" style="width: 0%;"></div>
+                </div>
+
+                <div class="gauge-row">
+                    <span style="color: #94A3B8;">Bin Capacity:</span>
+                    <strong style="color: #F8FAFC;" id="active-bin-capacity">240 L</strong>
+                </div>
+                <div class="gauge-row">
+                    <span style="color: #94A3B8;">Est. Waste Volume:</span>
+                    <strong style="color: #10B981;" id="active-bin-volume">0 L</strong>
+                </div>
+                <div class="gauge-row">
+                    <span style="color: #94A3B8;">Distance to Stop:</span>
+                    <strong style="color: #38BDF8;" id="active-stop-distance">0.0 km</strong>
+                </div>
+            </div>
+
+            <!-- Big Confirmation Button for Drivers -->
+            <button class="btn-driver-action" id="btn-empty-stop" onclick="confirmCurrentStopEmptied()">
+                <span>✅</span> Mark Bin Emptied &amp; Next Stop
+            </button>
+        </aside>
+
+        <!-- 2. CENTER: INTERACTIVE LEAFLET ROAD MAP -->
+        <main class="cockpit-card driver-map-stage" style="padding: 0;">
+            <div id="driver-map"></div>
+
+            <div class="map-overlay-controls">
+                <button class="map-control-btn" id="btn-sim-drive" onclick="toggleDriveSimulation()">
+                    🚗 Simulate Driver Route: OFF
+                </button>
+                <div style="display: flex; gap: 8px;">
+                    <button class="map-control-btn" onclick="recenterDriverMap()">🎯 Recenter</button>
+                    <button class="map-control-btn" onclick="exportCurrentManifest()">📥 Download CSV</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- 3. RIGHT CARD: FULL DISPATCH MANIFEST CHECKLIST -->
+        <aside class="cockpit-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--driver-border); padding-bottom: 8px; margin-bottom: 8px;">
+                <h3 style="margin: 0; font-size: 1.1rem; color: #FFFFFF;">📋 Manifest Checklist</h3>
+                <span id="manifest-count-badge" style="font-size: 0.75rem; background: #334155; padding: 2px 8px; border-radius: 6px; font-weight: 700;">0 Stops</span>
+            </div>
+
+            <div class="manifest-scroll-list" id="driver-manifest-list">
+                <!-- Populated dynamically -->
+            </div>
+
+            <div style="margin-top: auto; padding-top: 10px; border-top: 1px solid var(--driver-border); display: flex; justify-content: space-between; font-size: 0.8rem; color: #94A3B8;">
+                <span>Total Payload:</span>
+                <strong style="color: #10B981;" id="summary-payload">0 / 1500 L</strong>
+            </div>
+        </aside>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="auth.js"></script>
+    <script src="js/sfx.js"></script>
+    <script src="js/data-service.js"></script>
+    <script src="js/driver.js"></script>
+</body>
+</html>
