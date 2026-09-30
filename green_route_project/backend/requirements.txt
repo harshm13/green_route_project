@@ -1,9 +1,0 @@
-fastapi
-uvicorn
-sqlalchemy
-pydantic
-python-dotenv
-bcrypt
-pyjwt
-pillow
-websockets
