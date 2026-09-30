@@ -9,7 +9,7 @@
 /* Main Command Center Layout */
 .admin-layout {
     display: flex;
-    height: calc(100vh - 85px);
+    height: calc(100dvh - 85px);
     width: 100%;
     position: relative;
     overflow: hidden;
@@ -420,6 +420,6 @@
     }
     
     .map-viewport {
-        min-height: 50vh;
+        min-height: 50dvh;
     }
 }
