@@ -8,7 +8,7 @@
 body {
     background: radial-gradient(circle at top left, #dcfce7, #e0f2fe, #f3e8ff);
     color: #333; 
-    height: 100vh;
+    height: 100dvh;
     margin: 0 !important;
     padding: 0 !important;
     overflow: hidden; 
@@ -17,7 +17,7 @@ body {
 
 .dashboard-wrapper {
     display: flex;
-    height: 100vh;
+    height: 100dvh;
     padding: 24px;
     gap: 30px;
     max-width: 1600px;
