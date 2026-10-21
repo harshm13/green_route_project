@@ -339,11 +339,11 @@ def seed_database():
                 hashed_password=default_pwd,
                 role="citizen",
                 is_approved=True,
-                points=953,
-                rank="Nature Knight",
-                streak=4,
-                total_scans=18,
-                last_scan_date="2026-09-14"
+                points=0,
+                rank="Novice Sprout",
+                streak=0,
+                total_scans=0,
+                last_scan_date=None
             ),
             models.User(
                 id=2,

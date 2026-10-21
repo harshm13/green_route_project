@@ -8,12 +8,20 @@ let currentPoints = 0;
 let currentRankTitle = "Novice Sprout";
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Check Auth (Allow demo fallback)
+    // 1. Check Auth (Use real registered user, or initialize clean guest citizen)
     const user = getCurrentUser();
     if (!user.isAuthenticated) {
-        // Automatically seed demo citizen if accessing directly
-        seedDemoAccount('citizen');
-        return;
+        if (localStorage.getItem('registered_name')) {
+            localStorage.setItem('is_authenticated', 'true');
+        } else {
+            localStorage.setItem('registered_name', 'Citizen User');
+            localStorage.setItem('registered_email', 'citizen@greenroute.org');
+            localStorage.setItem('registered_role', 'citizen');
+            localStorage.setItem('is_authenticated', 'true');
+            localStorage.setItem('gr_points', '0');
+            localStorage.setItem('gr_streak', '0');
+            localStorage.setItem('gr_total_scans', '0');
+        }
     }
 
     // 2. Initialize UI & Data
@@ -31,22 +39,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function loadCitizenProfile() {
     let citizen = GreenRouteData.getCitizenData();
 
-    // If backend is active, fetch latest live stats from SQLite
+    // If backend is active and a registered user_id exists in session, sync live stats
     if (GreenRouteData.isBackendActive()) {
-        try {
-            const userId = localStorage.getItem('user_id') || 1;
-            const res = await fetch(`${GreenRouteData.API_BASE}/users/${userId}`);
-            if (res.ok) {
-                const liveUser = await res.json();
-                citizen.points = liveUser.points;
-                citizen.streak = liveUser.streak;
-                citizen.name = liveUser.name;
-                citizen.email = liveUser.email;
-                if (liveUser.total_scans !== undefined) citizen.totalScans = liveUser.total_scans;
-                GreenRouteData.saveCitizenData(citizen);
+        const userId = localStorage.getItem('user_id');
+        if (userId) {
+            try {
+                const res = await fetch(`${GreenRouteData.API_BASE}/users/${userId}`);
+                if (res.ok) {
+                    const liveUser = await res.json();
+                    citizen.points = liveUser.points;
+                    citizen.streak = liveUser.streak;
+                    citizen.name = liveUser.name;
+                    citizen.email = liveUser.email;
+                    if (liveUser.total_scans !== undefined) citizen.totalScans = liveUser.total_scans;
+                    GreenRouteData.saveCitizenData(citizen);
+                }
+            } catch (e) {
+                console.warn("Backend citizen profile refresh skipped:", e);
             }
-        } catch (e) {
-            console.warn("Backend citizen profile refresh skipped:", e);
         }
     }
 
@@ -340,7 +350,10 @@ function setScannerMode(mode) {
             tabWaste.style.color = '#64748B';
             tabWaste.style.boxShadow = 'none';
         }
-        if (qrOverlay) qrOverlay.classList.remove('hidden');
+        if (qrOverlay) {
+            qrOverlay.classList.remove('hidden');
+            qrOverlay.style.display = 'block';
+        }
         if (placeholderIcon) placeholderIcon.innerText = '🏁📱';
         if (placeholderTitle) placeholderTitle.innerText = 'Real Smart Bin QR Reader Active';
         if (placeholderSubtitle) placeholderSubtitle.innerText = 'Point camera at physical sticker on bin to auto-select';
@@ -357,7 +370,10 @@ function setScannerMode(mode) {
             tabQr.style.color = '#64748B';
             tabQr.style.boxShadow = 'none';
         }
-        if (qrOverlay) qrOverlay.classList.add('hidden');
+        if (qrOverlay) {
+            qrOverlay.classList.add('hidden');
+            qrOverlay.style.display = 'none';
+        }
         if (placeholderIcon) placeholderIcon.innerText = '🤖📸';
         if (placeholderTitle) placeholderTitle.innerText = 'AI Vision Scanner Ready';
         if (placeholderSubtitle) placeholderSubtitle.innerText = 'Snap a camera photo, upload, or click a preset sample below';
@@ -431,14 +447,20 @@ function parseAndApplyScannedQr(rawValue) {
 }
 
 function closeScannerModal() {
-    document.getElementById('interactive-scan-modal').classList.add('hidden');
+    const modal = document.getElementById('interactive-scan-modal');
+    if (modal) modal.classList.add('hidden');
     stopQrDetectionLoop();
     if (activeWebcamStream) {
         activeWebcamStream.getTracks().forEach(track => track.stop());
         activeWebcamStream = null;
-        const btnText = document.getElementById('webcam-btn-text');
-        if (btnText) btnText.innerText = "📷 Use Camera";
     }
+    const video = document.getElementById('webcam-feed');
+    if (video) {
+        video.srcObject = null;
+        video.classList.add('hidden');
+    }
+    const btnText = document.getElementById('webcam-btn-text');
+    if (btnText) btnText.innerText = "📷 Use Camera";
 }
 
 async function toggleWebcam() {
@@ -450,9 +472,12 @@ async function toggleWebcam() {
     if (activeWebcamStream) {
         activeWebcamStream.getTracks().forEach(track => track.stop());
         activeWebcamStream = null;
-        video.classList.add('hidden');
-        placeholder.classList.remove('hidden');
-        btnText.innerText = "📷 Use Camera";
+        if (video) {
+            video.srcObject = null;
+            video.classList.add('hidden');
+        }
+        if (placeholder) placeholder.classList.remove('hidden');
+        if (btnText) btnText.innerText = "📷 Use Camera";
         return;
     }
 
@@ -461,9 +486,12 @@ async function toggleWebcam() {
         activeWebcamStream = stream;
         video.srcObject = stream;
         video.classList.remove('hidden');
-        placeholder.classList.add('hidden');
-        imgPreview.classList.add('hidden');
-        btnText.innerText = "⏹️ Stop Camera";
+        if (placeholder) placeholder.classList.add('hidden');
+        if (imgPreview) {
+            imgPreview.removeAttribute('src');
+            imgPreview.classList.add('hidden');
+        }
+        if (btnText) btnText.innerText = "⏹️ Stop Camera";
 
         setTimeout(() => {
             captureWebcamFrame();
@@ -535,9 +563,15 @@ async function testVisionSample(sampleType, btnElement) {
         activeWebcamStream = null;
         document.getElementById('webcam-btn-text').innerText = "📷 Use Camera";
     }
-    video.classList.add('hidden');
-    placeholder.classList.remove('hidden');
-    imgPreview.classList.add('hidden');
+    if (video) {
+        video.srcObject = null;
+        video.classList.add('hidden');
+    }
+    if (placeholder) placeholder.classList.remove('hidden');
+    if (imgPreview) {
+        imgPreview.removeAttribute('src');
+        imgPreview.classList.add('hidden');
+    }
 
     const icons = {
         plastic: "🧴",

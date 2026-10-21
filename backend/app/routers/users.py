@@ -99,9 +99,9 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
         department=user_data.department or ("Campus Facilities" if is_admin else None),
         points=0,
         rank="Novice Sprout",
-        streak=1,
+        streak=0,
         total_scans=0,
-        last_scan_date=datetime.now().strftime("%Y-%m-%d")
+        last_scan_date=None
     )
     db.add(db_user)
     db.flush()

@@ -15,8 +15,8 @@ function getAuthHeaders() {
 function getCurrentUser() {
     const isAuth = localStorage.getItem('is_authenticated') === 'true';
     const role = localStorage.getItem('registered_role') || 'citizen';
-    const name = localStorage.getItem('registered_name') || (role === 'admin' ? 'Admin Officer' : 'Kushal Bhatt');
-    const email = localStorage.getItem('registered_email') || (role === 'admin' ? 'facilities.lead@sou.edu.in' : 'kushal@sou.edu.in');
+    const name = localStorage.getItem('registered_name') || (role === 'admin' ? 'Admin Officer' : 'Citizen User');
+    const email = localStorage.getItem('registered_email') || (role === 'admin' ? 'facilities.lead@sou.edu.in' : 'citizen@greenroute.org');
     const isApproved = localStorage.getItem('is_approved') !== 'false';
     const token = getAuthToken();
 
@@ -66,16 +66,21 @@ function logoutUser(event) {
 
 async function seedDemoAccount(role = 'citizen') {
     const creds = {
-        citizen: { name: 'Kushal Bhatt', email: 'kushal@sou.edu.in', dest: 'citizen.html' },
+        citizen: { name: 'Citizen User', email: 'citizen@greenroute.org', dest: 'citizen.html' },
         admin: { name: 'Vikram Mehta', admin_id: 'ADM-2026-X1', email: 'facilities.lead@sou.edu.in', dest: 'admin.html' },
         head_admin: { name: 'Director Sharma', admin_id: 'HEAD-AUTH-01', email: 'head.authority@sou.edu.in', dest: 'approvals.html' }
-    }[role] || { name: 'Kushal Bhatt', email: 'kushal@sou.edu.in', dest: 'citizen.html' };
+    }[role] || { name: 'Citizen User', email: 'citizen@greenroute.org', dest: 'citizen.html' };
 
     localStorage.setItem('is_authenticated', 'true');
     localStorage.setItem('registered_name', creds.name);
     localStorage.setItem('registered_email', creds.email);
     localStorage.setItem('registered_role', role);
     localStorage.setItem('is_approved', 'true');
+    if (localStorage.getItem('gr_points') === null) {
+        localStorage.setItem('gr_points', '0');
+        localStorage.setItem('gr_streak', '0');
+        localStorage.setItem('gr_total_scans', '0');
+    }
     if (creds.admin_id) localStorage.setItem('admin_id', creds.admin_id);
 
     try {

@@ -123,6 +123,11 @@ function bindForms() {
             localStorage.setItem('registered_role', 'citizen');
             localStorage.setItem('is_approved', 'true');
             localStorage.setItem('is_authenticated', 'true');
+            localStorage.setItem('gr_points', '0');
+            localStorage.setItem('gr_streak', '0');
+            localStorage.setItem('gr_total_scans', '0');
+            localStorage.setItem('gr_co2_kg', '0');
+            localStorage.setItem('gr_rank', 'Novice Sprout');
 
             showAlert(`Welcome, ${name}! Your Citizen account is active. Redirecting...`, 'success');
             citizenRegForm.reset();
@@ -280,10 +285,15 @@ function bindForms() {
             // Set Authenticated
             localStorage.setItem('is_authenticated', 'true');
             if (!localStorage.getItem('registered_name')) {
-                localStorage.setItem('registered_name', currentRole === 'admin' ? 'Vikram Mehta' : 'Kushal Bhatt');
+                localStorage.setItem('registered_name', currentRole === 'admin' ? 'Admin Officer' : 'Citizen User');
             }
             if (!localStorage.getItem('registered_role')) {
                 localStorage.setItem('registered_role', currentRole);
+            }
+            if (localStorage.getItem('gr_points') === null) {
+                localStorage.setItem('gr_points', '0');
+                localStorage.setItem('gr_streak', '0');
+                localStorage.setItem('gr_total_scans', '0');
             }
 
             showAlert('Authentication successful! Loading dashboard...', 'success');

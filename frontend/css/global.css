@@ -377,24 +377,49 @@ body {
     border-radius: 12px;
     width: 100%;
     box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    text-align: left;
+  }
+
+  .nav-links a span.icon {
+    width: auto !important;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
   }
 
   .nav-links select,
-  .nav-links button,
-  .nav-links span {
+  .nav-links button {
     width: 100%;
     justify-content: center;
     box-sizing: border-box;
   }
 }
 
+/* Universal Utility Visibility Class */
+.hidden {
+  display: none !important;
+}
+
 /* Modal Fluid Responsiveness across All Devices */
 .modal-overlay {
-  padding: 12px;
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
+  z-index: 20000 !important;
 }
 
 .modal-content {
@@ -405,6 +430,17 @@ body {
   -webkit-overflow-scrolling: touch;
   margin: auto !important;
   box-sizing: border-box;
+  position: relative;
+  z-index: 20001;
+}
+
+@media (max-width: 768px) {
+  /* Position SFX toggle neatly above bottom dock */
+  .sfx-floating-toggle {
+    bottom: 78px;
+    right: 14px;
+    z-index: 999;
+  }
 }
 
 @media (max-width: 480px) {
@@ -418,8 +454,8 @@ body {
   }
   
   .sfx-floating-toggle {
-    bottom: 16px;
-    right: 16px;
+    bottom: 76px;
+    right: 12px;
     padding: 0.4rem 0.8rem;
     font-size: 0.75rem;
   }

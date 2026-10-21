@@ -490,13 +490,31 @@ const GreenRouteData = (function () {
 
     // --- CITIZEN DATA & GAMIFICATION ---
     function getCitizenData() {
+        const regName = localStorage.getItem('registered_name');
+        const regEmail = localStorage.getItem('registered_email');
+        const storedPoints = localStorage.getItem('gr_points');
+        const storedStreak = localStorage.getItem('gr_streak');
+        const storedScans = localStorage.getItem('gr_total_scans');
+
+        let points = (storedPoints !== null && !isNaN(Number(storedPoints))) ? Math.max(0, Number(storedPoints)) : 0;
+        let scans = (storedScans !== null && !isNaN(Number(storedScans))) ? Math.max(0, Number(storedScans)) : 0;
+        let streak = (storedStreak !== null && !isNaN(Number(storedStreak))) ? Math.max(0, Number(storedStreak)) : 0;
+
+        // Reset legacy hardcoded dummy points (500, 640, 953) to 0 if user has 0 scans
+        if (scans === 0 && (points === 500 || points === 640 || points === 953)) {
+            points = 0;
+            streak = 0;
+            localStorage.setItem('gr_points', '0');
+            localStorage.setItem('gr_streak', '0');
+        }
+
         const defaultCitizen = {
-            name: localStorage.getItem('registered_name') || "Kushal Bhatt",
-            email: localStorage.getItem('registered_email') || "kushal@sou.edu.in",
-            campus: "Silver Oak University",
-            points: Number(localStorage.getItem('gr_points')) || 500,
-            streak: Number(localStorage.getItem('gr_streak')) || 3,
-            totalScans: Number(localStorage.getItem('gr_total_scans')) || 7
+            name: regName || "Citizen User",
+            email: regEmail || "citizen@greenroute.org",
+            campus: localStorage.getItem('campus_name') || "Silver Oak University",
+            points: points,
+            streak: streak,
+            totalScans: scans
         };
         return defaultCitizen;
     }
@@ -620,8 +638,11 @@ const GreenRouteData = (function () {
                 if (res.ok) {
                     const users = await res.json();
                     if (Array.isArray(users) && users.length > 0) {
+                        let hasMe = false;
                         const formatted = users.map((u, idx) => {
-                            const isMe = (u.email && u.email.toLowerCase() === citizen.email.toLowerCase()) || u.name === citizen.name;
+                            const isMe = (u.email && u.email.toLowerCase() === citizen.email.toLowerCase()) || 
+                                         (u.name && u.name.toLowerCase() === citizen.name.toLowerCase());
+                            if (isMe) hasMe = true;
                             return {
                                 name: isMe ? `${u.name} (You)` : u.name,
                                 points: u.points,
@@ -630,6 +651,19 @@ const GreenRouteData = (function () {
                                 isMe: isMe
                             };
                         });
+
+                        // Ensure current registered user is always visible in leaderboard
+                        if (!hasMe) {
+                            formatted.push({
+                                name: `${citizen.name} (You)`,
+                                points: citizen.points,
+                                avatar: calculateRank(citizen.points).icon,
+                                badge: calculateRank(citizen.points).title,
+                                isMe: true
+                            });
+                            formatted.sort((a, b) => b.points - a.points);
+                        }
+
                         localStorage.setItem('gr_leaderboard', JSON.stringify(formatted));
                         return formatted;
                     }
@@ -641,15 +675,29 @@ const GreenRouteData = (function () {
 
         const cached = localStorage.getItem('gr_leaderboard');
         if (cached) {
-            try { return JSON.parse(cached); } catch(e) {}
+            try {
+                const parsed = JSON.parse(cached);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    // Update user's current points in cache
+                    parsed.forEach(u => {
+                        if (u.isMe) {
+                            u.name = `${citizen.name} (You)`;
+                            u.points = citizen.points;
+                            u.badge = calculateRank(citizen.points).title;
+                        }
+                    });
+                    parsed.sort((a, b) => b.points - a.points);
+                    return parsed;
+                }
+            } catch(e) {}
         }
 
         const baseLeaderboard = [
             { name: "Rahul D.", points: 2850, avatar: "🏆", badge: "Gaia Master", isMe: false },
             { name: "Sneha P.", points: 1920, avatar: "🛡️", badge: "Planet Guardian", isMe: false },
             { name: "Amit K.", points: 1410, avatar: "⚔️", badge: "Nature Knight", isMe: false },
-            { name: `${citizen.name} (You)`, points: citizen.points, avatar: "🌱", badge: calculateRank(citizen.points).title, isMe: true },
-            { name: "Tanvi S.", points: 420, avatar: "🌿", badge: "Eco Ranger", isMe: false }
+            { name: "Tanvi S.", points: 420, avatar: "🌿", badge: "Eco Ranger", isMe: false },
+            { name: `${citizen.name} (You)`, points: citizen.points, avatar: calculateRank(citizen.points).icon, badge: calculateRank(citizen.points).title, isMe: true }
         ];
 
         baseLeaderboard.sort((a, b) => b.points - a.points);
