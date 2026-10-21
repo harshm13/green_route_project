@@ -360,10 +360,31 @@
                 <button onclick="closeScannerModal()" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #9CA3AF;">✕</button>
             </div>
 
+            <!-- Scanner Mode Toggle: AI Vision vs Real Physical QR Reader -->
+            <div style="display: flex; gap: 6px; margin: 10px 0 12px 0; background: #F1F5F9; padding: 4px; border-radius: 10px;">
+                <button type="button" id="tab-scan-waste" class="btn" style="flex: 1; padding: 6px; font-size: 0.8rem; font-weight: 700; border-radius: 8px; background: #FFFFFF; color: #0F172A; box-shadow: 0 1px 3px rgba(0,0,0,0.1);" onclick="setScannerMode('waste')">
+                    🧴 Waste Vision AI
+                </button>
+                <button type="button" id="tab-scan-qr" class="btn" style="flex: 1; padding: 6px; font-size: 0.8rem; font-weight: 700; border-radius: 8px; background: transparent; color: #64748B;" onclick="setScannerMode('qr')">
+                    🏁 Real QR Bin Reader
+                </button>
+            </div>
+
             <!-- Viewfinder Area -->
             <div class="vision-container" id="vision-container">
                 <div class="vision-laser-beam" id="vision-laser-beam"></div>
                 
+                <!-- QR Corner Reticles (visible in QR mode) -->
+                <div id="qr-reticle-overlay" class="hidden" style="position: absolute; inset: 25px; border: 2px dashed rgba(16, 185, 129, 0.6); border-radius: 16px; pointer-events: none; z-index: 10;">
+                    <div style="position: absolute; top: -2px; left: -2px; width: 22px; height: 22px; border-top: 4px solid #10B981; border-left: 4px solid #10B981; border-top-left-radius: 12px;"></div>
+                    <div style="position: absolute; top: -2px; right: -2px; width: 22px; height: 22px; border-top: 4px solid #10B981; border-right: 4px solid #10B981; border-top-right-radius: 12px;"></div>
+                    <div style="position: absolute; bottom: -2px; left: -2px; width: 22px; height: 22px; border-bottom: 4px solid #10B981; border-left: 4px solid #10B981; border-bottom-left-radius: 12px;"></div>
+                    <div style="position: absolute; bottom: -2px; right: -2px; width: 22px; height: 22px; border-bottom: 4px solid #10B981; border-right: 4px solid #10B981; border-bottom-right-radius: 12px;"></div>
+                    <div id="qr-scan-hint" style="position: absolute; bottom: 8px; left: 0; right: 0; text-align: center; font-size: 0.72rem; font-weight: 700; color: #10B981; background: rgba(15, 23, 42, 0.75); padding: 3px 8px; border-radius: 6px; margin: 0 15px;">
+                        Align physical bin QR code within frame
+                    </div>
+                </div>
+
                 <!-- Live Video Feed (Hidden by default unless webcam active) -->
                 <video id="webcam-feed" class="vision-video hidden" autoplay playsinline muted></video>
 
@@ -372,9 +393,9 @@
 
                 <!-- Placeholder Graphic -->
                 <div id="vision-placeholder" style="text-align: center; color: #94A3B8;">
-                    <div style="font-size: 3rem; margin-bottom: 6px;">🤖📸</div>
-                    <div style="font-size: 0.85rem; font-weight: 600; color: #38BDF8;">AI Vision Scanner Ready</div>
-                    <div style="font-size: 0.72rem; color: #64748B;">Snap a camera photo, upload, or click a preset sample below</div>
+                    <div id="placeholder-icon" style="font-size: 3rem; margin-bottom: 6px;">🤖📸</div>
+                    <div id="placeholder-title" style="font-size: 0.85rem; font-weight: 600; color: #38BDF8;">AI Vision Scanner Ready</div>
+                    <div id="placeholder-subtitle" style="font-size: 0.72rem; color: #64748B;">Snap a camera photo, upload, or click a preset sample below</div>
                 </div>
             </div>
 

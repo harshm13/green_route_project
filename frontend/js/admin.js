@@ -685,9 +685,139 @@ function closeEsgModal() {
     if (modal) modal.style.display = 'none';
 }
 
+// --- PHYSICAL QR CODE & VINYL LABEL MANAGEMENT ---
+async function openQrCenterModal() {
+    const modal = document.getElementById('qr-center-modal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    if (window.GreenRouteSFX) GreenRouteSFX.playScan();
+    
+    const activeTenant = GreenRouteData.getActiveTenant() || 'sou';
+    const filterSelect = document.getElementById('qr-tenant-filter');
+    if (filterSelect) filterSelect.value = activeTenant;
+    
+    await renderQrBinsGrid(activeTenant);
+}
+
+function closeQrCenterModal() {
+    const modal = document.getElementById('qr-center-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+async function filterQrBinsByTenant(tenant) {
+    await renderQrBinsGrid(tenant);
+}
+
+async function renderQrBinsGrid(tenantFilter = 'all') {
+    const container = document.getElementById('qr-bins-grid');
+    if (!container) return;
+    
+    container.innerHTML = '<div style="color: #94A3B8; padding: 20px;">Loading QR matrices...</div>';
+    const allBins = await GreenRouteData.getBins();
+    const bins = tenantFilter === 'all' ? allBins : allBins.filter(b => (b.tenant_id || 'sou').toLowerCase() === tenantFilter.toLowerCase());
+    
+    if (bins.length === 0) {
+        container.innerHTML = '<div style="color: #94A3B8; padding: 20px; grid-column: 1/-1;">No smart bins registered in this campus zone.</div>';
+        return;
+    }
+    
+    const isLive = GreenRouteData.isBackendActive();
+    const apiBase = GreenRouteData.API_BASE;
+    
+    container.innerHTML = bins.map(b => {
+        const qrUrl = isLive 
+            ? `${apiBase}/bins/${b.id}/qr` 
+            : `https://api.qrserver.com/v1/create-qr-code/?size=250x250&color=047857&data=${encodeURIComponent(window.location.origin + '/citizen.html?bin_id=' + b.id)}`;
+        
+        const labelUrl = `${apiBase}/bins/${b.id}/qr-label`;
+        
+        return `
+            <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px; text-align: center; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 0.75rem; font-weight: 800; color: #34D399; background: rgba(16, 185, 129, 0.15); padding: 2px 6px; border-radius: 6px;">BIN #${b.id}</span>
+                        <span style="font-size: 0.72rem; color: #94A3B8; text-transform: uppercase;">${b.zone || 'General'}</span>
+                    </div>
+                    <h4 style="margin: 0 0 6px 0; font-size: 0.95rem; color: #F8FAFC; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${b.name}">${b.name}</h4>
+                    <div style="font-size: 0.7rem; color: #64748B; margin-bottom: 10px;">📍 ${Number(b.lat || b.latitude || 23.08).toFixed(4)}°N, ${Number(b.lng || b.longitude || 72.54).toFixed(4)}°E</div>
+                </div>
+
+                <div style="background: #FFFFFF; padding: 10px; border-radius: 10px; display: inline-block; margin: 0 auto 12px auto; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                    <img src="${qrUrl}" alt="QR Code Bin ${b.id}" style="width: 130px; height: 130px; display: block;" onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=greenroute_bin_${b.id}'">
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <div style="display: flex; gap: 6px;">
+                        <button class="btn btn-outline" style="flex: 1; padding: 5px; font-size: 0.75rem; border-color: rgba(255,255,255,0.2); color: #38BDF8;" onclick="previewBinBadge(${b.id}, '${b.name.replace(/'/g, "\\'")}')">
+                            🔍 Preview
+                        </button>
+                        <a href="${isLive ? labelUrl + '?download=true' : qrUrl}" download="greenroute_bin_${b.id}.png" class="btn btn-primary" style="flex: 1; padding: 5px; font-size: 0.75rem; text-decoration: none; text-align: center; background: #059669;">
+                            ⬇️ Badge
+                        </a>
+                    </div>
+                    <button class="btn" style="padding: 4px; font-size: 0.72rem; background: rgba(255,255,255,0.06); color: #94A3B8; border: none; border-radius: 6px; cursor: pointer;" onclick="copyScanUrl(${b.id})">
+                        🔗 Copy Scan URL
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function copyScanUrl(binId) {
+    const scanUrl = `${window.location.origin}/citizen.html?bin_id=${binId}`;
+    navigator.clipboard.writeText(scanUrl);
+    alert(`Copied direct scan URL for Bin #${binId}:\n${scanUrl}`);
+}
+
+function previewBinBadge(binId, binName) {
+    const modal = document.getElementById('qr-preview-modal');
+    const img = document.getElementById('preview-badge-img');
+    const title = document.getElementById('preview-badge-title');
+    const btnDownload = document.getElementById('btn-download-preview-badge');
+    
+    if (!modal || !img) return;
+    
+    title.innerText = `Sticker Badge: Bin #${binId} • ${binName}`;
+    const isLive = GreenRouteData.isBackendActive();
+    const badgeUrl = isLive 
+        ? `${GreenRouteData.API_BASE}/bins/${binId}/qr-label` 
+        : `https://api.qrserver.com/v1/create-qr-code/?size=400x400&color=047857&data=${encodeURIComponent(window.location.origin + '/citizen.html?bin_id=' + binId)}`;
+    
+    img.src = badgeUrl;
+    btnDownload.href = isLive ? `${GreenRouteData.API_BASE}/bins/${binId}/qr-label?download=true` : badgeUrl;
+    
+    modal.classList.remove('hidden');
+    if (window.GreenRouteSFX) GreenRouteSFX.playClick();
+}
+
+function closeQrPreviewModal() {
+    const modal = document.getElementById('qr-preview-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function downloadAllQrLabelsZip() {
+    const filter = document.getElementById('qr-tenant-filter')?.value || 'sou';
+    const isLive = GreenRouteData.isBackendActive();
+    if (!isLive) {
+        alert("Batch ZIP download requires the GreenRoute FastAPI backend to be running. Please start the backend server!");
+        return;
+    }
+    const downloadUrl = GreenRouteData.getDownloadAllLabelsUrl(filter);
+    window.location.href = downloadUrl;
+}
+
 window.onTenantChange = onTenantChange;
 window.openEsgModal = openEsgModal;
 window.closeEsgModal = closeEsgModal;
+
+window.openQrCenterModal = openQrCenterModal;
+window.closeQrCenterModal = closeQrCenterModal;
+window.filterQrBinsByTenant = filterQrBinsByTenant;
+window.previewBinBadge = previewBinBadge;
+window.closeQrPreviewModal = closeQrPreviewModal;
+window.downloadAllQrLabelsZip = downloadAllQrLabelsZip;
+window.copyScanUrl = copyScanUrl;
 
 window.toggleSimulationMode = toggleSimulationMode;
 window.setMapMode = setMapMode;

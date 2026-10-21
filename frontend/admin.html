@@ -34,6 +34,11 @@
                 <span>📊</span> ESG Report
             </button>
 
+            <!-- Physical QR Label Center Button -->
+            <button class="btn btn-outline" style="padding: 4px 10px; font-size: 0.8rem; border-radius: 8px; font-weight: 700; border: 1px solid #0EA5E9; color: #0284C7; background: #F0F9FF; display: flex; align-items: center; gap: 5px; cursor: pointer;" onclick="openQrCenterModal()">
+                <span>🖨️</span> QR Labels
+            </button>
+
             <!-- WebSocket Telemetry Status -->
             <span id="telemetry-status-pill" style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: 700; padding: 3px 8px; border-radius: 20px; background: rgba(59, 130, 246, 0.12); color: #2563EB; border: 1px solid rgba(59, 130, 246, 0.25);">
                 <span class="pulse-dot" style="background:#3B82F6; width:6px; height:6px; border-radius:50%; display:inline-block;"></span>
@@ -368,6 +373,75 @@
             </div>
         </div>
     </div>
+
+    <!-- PHYSICAL SMART BIN QR & VINYL LABEL MODAL -->
+    <div id="qr-center-modal" class="modal-overlay hidden" style="backdrop-filter: blur(8px); background: rgba(15, 23, 42, 0.75);">
+        <div class="modal-content bento-card" style="max-width: 900px; width: 92%; max-height: 88vh; display: flex; flex-direction: column; padding: 24px; border: 1px solid rgba(255,255,255,0.12); background: #0F172A; color: #F8FAFC;">
+            
+            <!-- Modal Header -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 14px;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.5rem;">🖨️</span>
+                        <h2 style="font-size: 1.35rem; color: #38BDF8; margin: 0; font-weight: 800;">Smart Bin Physical QR &amp; Label Center</h2>
+                    </div>
+                    <p style="color: #94A3B8; font-size: 0.82rem; margin: 4px 0 0 0;">
+                        Generate scannable QR matrices, preview weatherproof vinyl sticker labels, and batch-export for physical deployment on campus bins.
+                    </p>
+                </div>
+                <button onclick="closeQrCenterModal()" style="background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #64748B;">✕</button>
+            </div>
+
+            <!-- Action Ribbon -->
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 0.8rem; color: #94A3B8; font-weight: 600;">Filter Campus:</span>
+                    <select id="qr-tenant-filter" onchange="filterQrBinsByTenant(this.value)" style="background: #1E293B; color: #F8FAFC; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 5px 10px; font-size: 0.82rem; outline: none;">
+                        <option value="all">All Campuses</option>
+                        <option value="sou" selected>Silver Oak University</option>
+                        <option value="tech_hub">Ahmedabad Tech Hub</option>
+                        <option value="metro_med">Metro Health City</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-primary" onclick="downloadAllQrLabelsZip()" style="padding: 6px 14px; font-size: 0.82rem; font-weight: 700; background: #10B981; display: flex; align-items: center; gap: 6px;">
+                        <span>📦</span> Batch Download All Labels (.ZIP)
+                    </button>
+                    <button class="btn btn-outline" onclick="window.print()" style="padding: 6px 12px; font-size: 0.82rem; border-color: rgba(255,255,255,0.2); color: #F8FAFC;">
+                        <span>🖨️</span> Print Current Sheet
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bins QR Cards Grid (Scrollable) -->
+            <div id="qr-bins-grid" style="overflow-y: auto; flex: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; padding-right: 4px;">
+                <!-- Populated dynamically by admin.js -->
+            </div>
+        </div>
+    </div>
+
+    <!-- PREVIEW VINYL STICKER BADGE MODAL -->
+    <div id="qr-preview-modal" class="modal-overlay hidden" style="backdrop-filter: blur(10px); z-index: 10000; background: rgba(0,0,0,0.8);">
+        <div class="modal-content bento-card" style="max-width: 520px; width: 90%; text-align: center; padding: 20px; background: #0F172A; border: 1px solid rgba(255,255,255,0.15);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h3 id="preview-badge-title" style="margin: 0; color: #34D399; font-size: 1.1rem; font-weight: 700;">Physical Sticker Preview</h3>
+                <button onclick="closeQrPreviewModal()" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #94A3B8;">✕</button>
+            </div>
+            
+            <div style="background: #FFFFFF; padding: 8px; border-radius: 12px; margin-bottom: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); max-height: 60vh; overflow-y: auto;">
+                <img id="preview-badge-img" src="" alt="Bin Sticker Preview" style="width: 100%; border-radius: 8px; display: block;">
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <a id="btn-download-preview-badge" href="#" download class="btn btn-primary" style="flex: 1; text-decoration: none; padding: 8px; font-size: 0.85rem; font-weight: 700;">
+                    ⬇️ Download Full-Res Badge (PNG)
+                </a>
+                <button onclick="closeQrPreviewModal()" class="btn btn-outline" style="flex: 1; padding: 8px; font-size: 0.85rem; border-color: rgba(255,255,255,0.2); color: #F8FAFC;">
+                    Done
+                </button>
+            </div>
+        </div>
 
     <!-- Floating Cyber SFX Toggle Button -->
     <button id="gr-sfx-toggle" class="sfx-floating-toggle" onclick="GreenRouteSFX.toggleMute()">

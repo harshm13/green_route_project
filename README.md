@@ -23,6 +23,17 @@ GreenRoute is an IoT-inspired smart logistics and urban waste management platfor
 * **Campus Leaderboard:** Live ranking system encouraging student and staff participation.
 * **Reward Perks Catalog:** Redeem accumulated Green Points for vouchers (free campus coffee, eco gear, bike passes).
 
+### 🏷️ Real Physical QR Codes & Smart Bin Vinyl Labels
+* **Hardware QR Sticker Generation:** Dynamic deep-link QR matrices generated with High Error Correction (Level H - 30% recovery tolerance for weathered outdoor smart bins).
+* **Print-Ready Vinyl Sticker Badges:** Automated 700x950px industrial composite sticker badge generator (`/bins/{id}/qr-label`) complete with campus zone, GPS coordinates, anti-fraud cryptographic serial hash, and accepted material badges.
+* **Live In-Browser & Mobile Camera Decoding:** Real-time hardware QR scanning using `BarcodeDetector` API and Expo `CameraView` with GPS Geofence proximity verification ($\le 50\text{m}$).
+* **Batch Export:** One-click ZIP generation (`/bins/qr-codes/download-all`) for instant field printing.
+
+### 📱 Cross-Platform Mobile Application (React Native & Expo)
+* **Dedicated Mobile Architecture:** Full architecture blueprint in [`docs/MOBILE_APP_ARCHITECTURE.md`](docs/MOBILE_APP_ARCHITECTURE.md) and starter client in [`mobile/`](mobile/).
+* **Native Hardware Integration:** Built with `expo-camera` (hardware QR barcode scanner), `expo-location` (fine GPS geofencing), and `expo-haptics`.
+* **Citizen & Driver Modes:** Instant switching between Citizen QR Scanner & Waste Deposit vs. Fleet Driver route navigation and bin emptying.
+
 ### 🔒 Enterprise Security & Governance
 * **Bcrypt Password Hashing:** User passwords stored cryptographically salted with `bcrypt`.
 * **Stateless JWT Authentication:** Cryptographically signed Bearer tokens (`HS256`) governing API access.

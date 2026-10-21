@@ -5,7 +5,7 @@ and critical overflow broadcast alerts.
 """
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import json
 import asyncio
 import random

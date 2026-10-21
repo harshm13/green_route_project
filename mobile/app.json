@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "GreenRoute",
+    "slug": "greenroute",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#0F172A"
+    },
+    "scheme": "greenroute",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.greenroute.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "GreenRoute requires camera access to scan smart bin physical QR codes and classify recyclable waste items.",
+        "NSLocationWhenInUseUsageDescription": "GreenRoute validates that you are within 50 meters of the smart bin to verify your recycling deposit and grant bonus Green Points."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#065F46"
+      },
+      "package": "com.greenroute.app",
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "VIBRATE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}

@@ -1050,7 +1050,10 @@ const GreenRouteData = (function () {
         exportCsvManifest,
         classifyWaste,
         verifyAndScanWaste,
-        getOverflowForecast
+        getOverflowForecast,
+        getBinQrUrl: (binId) => `${API_BASE}/bins/${binId}/qr`,
+        getBinLabelUrl: (binId, download = false) => `${API_BASE}/bins/${binId}/qr-label${download ? '?download=true' : ''}`,
+        getDownloadAllLabelsUrl: (tenantId) => `${API_BASE}/bins/qr-codes/download-all?tenant_id=${tenantId || ''}`
     };
 })();
 

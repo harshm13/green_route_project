@@ -22,6 +22,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderQuests();
     renderRewards();
     await updateLeaderboard();
+
+    // 3. Check for Real Physical QR Code in URL (?bin_id=X)
+    handleUrlQrDeepLink();
 });
 
 // --- LOAD CITIZEN PROFILE ---
@@ -296,8 +299,140 @@ function openScannerForBin(binId) {
     }, 100);
 }
 
+let currentScannerMode = 'waste'; // 'waste' | 'qr'
+let qrScanInterval = null;
+
+// Handle physical QR codes scanned by mobile camera (?bin_id=X)
+function handleUrlQrDeepLink() {
+    const params = new URLSearchParams(window.location.search);
+    const binId = params.get('bin_id') || params.get('scan_bin');
+    if (binId) {
+        console.log(`[GreenRoute QR] Direct physical QR deep-link detected: Bin #${binId}`);
+        setTimeout(() => {
+            openScannerForBin(parseInt(binId, 10));
+            if (window.GreenRouteSFX) GreenRouteSFX.playSuccess();
+            // Show alert feedback banner
+            const modalTitle = document.querySelector('#interactive-scan-modal h3');
+            if (modalTitle) {
+                modalTitle.innerHTML = `📷 AI Waste Scanner <span style="font-size: 0.72rem; background: #ECFDF5; color: #047857; padding: 2px 8px; border-radius: 12px; border: 1px solid #10B981;">📍 Physical QR #${binId} Locked</span>`;
+            }
+        }, 600);
+    }
+}
+
+function setScannerMode(mode) {
+    currentScannerMode = mode;
+    const tabWaste = document.getElementById('tab-scan-waste');
+    const tabQr = document.getElementById('tab-scan-qr');
+    const qrOverlay = document.getElementById('qr-reticle-overlay');
+    const placeholderIcon = document.getElementById('placeholder-icon');
+    const placeholderTitle = document.getElementById('placeholder-title');
+    const placeholderSubtitle = document.getElementById('placeholder-subtitle');
+
+    if (mode === 'qr') {
+        if (tabQr) {
+            tabQr.style.background = '#FFFFFF';
+            tabQr.style.color = '#0F172A';
+            tabQr.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+        }
+        if (tabWaste) {
+            tabWaste.style.background = 'transparent';
+            tabWaste.style.color = '#64748B';
+            tabWaste.style.boxShadow = 'none';
+        }
+        if (qrOverlay) qrOverlay.classList.remove('hidden');
+        if (placeholderIcon) placeholderIcon.innerText = '🏁📱';
+        if (placeholderTitle) placeholderTitle.innerText = 'Real Smart Bin QR Reader Active';
+        if (placeholderSubtitle) placeholderSubtitle.innerText = 'Point camera at physical sticker on bin to auto-select';
+
+        startQrDetectionLoop();
+    } else {
+        if (tabWaste) {
+            tabWaste.style.background = '#FFFFFF';
+            tabWaste.style.color = '#0F172A';
+            tabWaste.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+        }
+        if (tabQr) {
+            tabQr.style.background = 'transparent';
+            tabQr.style.color = '#64748B';
+            tabQr.style.boxShadow = 'none';
+        }
+        if (qrOverlay) qrOverlay.classList.add('hidden');
+        if (placeholderIcon) placeholderIcon.innerText = '🤖📸';
+        if (placeholderTitle) placeholderTitle.innerText = 'AI Vision Scanner Ready';
+        if (placeholderSubtitle) placeholderSubtitle.innerText = 'Snap a camera photo, upload, or click a preset sample below';
+
+        stopQrDetectionLoop();
+    }
+}
+
+async function startQrDetectionLoop() {
+    stopQrDetectionLoop();
+    if (!window.BarcodeDetector) {
+        console.log("[GreenRoute QR] BarcodeDetector not natively available in this browser. Fallback active.");
+        return;
+    }
+
+    try {
+        const barcodeDetector = new window.BarcodeDetector({ formats: ['qr_code'] });
+        const video = document.getElementById('webcam-feed');
+
+        qrScanInterval = setInterval(async () => {
+            if (!activeWebcamStream || !video || video.readyState < 2 || currentScannerMode !== 'qr') return;
+            try {
+                const barcodes = await barcodeDetector.detect(video);
+                if (barcodes && barcodes.length > 0) {
+                    const rawVal = barcodes[0].rawValue;
+                    console.log("[GreenRoute QR] Live QR Decoded:", rawVal);
+                    parseAndApplyScannedQr(rawVal);
+                }
+            } catch (err) {
+                // Ignore transient frame decode drops
+            }
+        }, 400);
+    } catch (e) {
+        console.warn("[GreenRoute QR] BarcodeDetector init failed:", e);
+    }
+}
+
+function stopQrDetectionLoop() {
+    if (qrScanInterval) {
+        clearInterval(qrScanInterval);
+        qrScanInterval = null;
+    }
+}
+
+function parseAndApplyScannedQr(rawValue) {
+    let binId = null;
+    try {
+        if (rawValue.includes('bin_id=')) {
+            const url = new URL(rawValue, window.location.origin);
+            binId = url.searchParams.get('bin_id');
+        } else if (rawValue.startsWith('{')) {
+            const parsed = JSON.parse(rawValue);
+            binId = parsed.bin_id || parsed.id;
+        } else if (/^\d+$/.test(rawValue.trim())) {
+            binId = rawValue.trim();
+        }
+    } catch (e) {
+        const match = rawValue.match(/bin_id=([0-9]+)/i);
+        if (match) binId = match[1];
+    }
+
+    if (binId) {
+        const select = document.getElementById('scan-bin-select');
+        if (select) {
+            select.value = binId;
+        }
+        if (window.GreenRouteSFX) GreenRouteSFX.playSuccess();
+        alert(`🎯 Verified Physical Smart Bin #${binId} Detected via Camera! Switching to Waste Classification...`);
+        setScannerMode('waste');
+    }
+}
+
 function closeScannerModal() {
     document.getElementById('interactive-scan-modal').classList.add('hidden');
+    stopQrDetectionLoop();
     if (activeWebcamStream) {
         activeWebcamStream.getTracks().forEach(track => track.stop());
         activeWebcamStream = null;

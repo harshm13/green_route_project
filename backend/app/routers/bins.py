@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, Request
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List, Optional
@@ -127,3 +127,92 @@ def seed_bins(db: Session = Depends(get_db)):
     from ..seed import seed_database
     seed_database()
     return {"status": "success", "message": "Campus bins and demo data re-seeded successfully!"}
+
+# --- REAL PRODUCTION QR & PHYSICAL BIN LABEL SYSTEM ---
+
+# 6. Get Raw Scannable QR Matrix Image (PNG)
+@router.get("/{bin_id}/qr", summary="Generate real scannable QR code PNG for a smart bin")
+def get_bin_qr_image(
+    bin_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    bin_obj = db.query(models.Bin).filter(models.Bin.id == bin_id).first()
+    if not bin_obj:
+        raise HTTPException(status_code=404, detail="Bin not found")
+    
+    from ..qr_service import generate_bin_qr_code
+    base_url = str(request.base_url).rstrip("/")
+    img = generate_bin_qr_code(bin_id=bin_obj.id, tenant_id=bin_obj.tenant_id, base_url=base_url)
+    
+    import io
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return Response(content=buf.getvalue(), media_type="image/png")
+
+# 7. Get High-Resolution Printable Physical Bin Sticker Label (PNG)
+@router.get("/{bin_id}/qr-label", summary="Generate full printable vinyl sticker badge with branding, geofence, and QR")
+def get_bin_printable_label(
+    bin_id: int,
+    request: Request,
+    download: bool = Query(False, description="Set true to trigger browser file download"),
+    db: Session = Depends(get_db)
+):
+    bin_obj = db.query(models.Bin).filter(models.Bin.id == bin_id).first()
+    if not bin_obj:
+        raise HTTPException(status_code=404, detail="Bin not found")
+        
+    from ..qr_service import generate_printable_bin_label
+    base_url = str(request.base_url).rstrip("/")
+    
+    bin_dict = {
+        "id": bin_obj.id,
+        "name": bin_obj.name,
+        "tenant_id": bin_obj.tenant_id,
+        "zone": bin_obj.zone,
+        "latitude": bin_obj.latitude,
+        "longitude": bin_obj.longitude
+    }
+    
+    label_bytes = generate_printable_bin_label(bin_dict, base_url=base_url)
+    headers = {}
+    if download:
+        filename = f"greenroute_sticker_bin_{bin_obj.id:03d}.png"
+        headers["Content-Disposition"] = f'attachment; filename="{filename}"'
+        
+    return Response(content=label_bytes, media_type="image/png", headers=headers)
+
+# 8. Download all printable QR labels as a ZIP bundle
+@router.get("/qr-codes/download-all", summary="Batch download all campus smart bin physical labels as ZIP")
+def download_all_qr_labels(
+    request: Request,
+    tenant_id: Optional[str] = Query(None, description="Optional tenant filter"),
+    db: Session = Depends(get_db),
+    current_admin: models.User = Depends(require_role(["admin", "head_admin"]))
+):
+    query = db.query(models.Bin)
+    if tenant_id and tenant_id.lower() != "all":
+        query = query.filter(models.Bin.tenant_id == tenant_id)
+    bins = query.all()
+    
+    from ..qr_service import generate_all_labels_zip
+    base_url = str(request.base_url).rstrip("/")
+    
+    bins_data = [
+        {
+            "id": b.id,
+            "name": b.name,
+            "tenant_id": b.tenant_id,
+            "zone": b.zone,
+            "latitude": b.latitude,
+            "longitude": b.longitude
+        }
+        for b in bins
+    ]
+    
+    zip_bytes = generate_all_labels_zip(bins_data, base_url=base_url)
+    headers = {
+        "Content-Disposition": 'attachment; filename="greenroute_smart_bin_labels_all.zip"'
+    }
+    return Response(content=zip_bytes, media_type="application/zip", headers=headers)
+
