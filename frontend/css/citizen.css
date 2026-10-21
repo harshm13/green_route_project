@@ -28,46 +28,91 @@ body {
     box-sizing: border-box;
 }
 
-/* --- THE SIDEBAR --- */
+/* --- THE SIDEBAR (DESKTOP) --- */
 .sidebar {
-    width: 90px;
+    width: 96px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 30px 0;
+    padding: 26px 0;
     flex-shrink: 0;
+    transition: all 0.3s ease;
 }
 
 .brand-icon {
     font-size: 2.5rem;
-    margin-bottom: 50px;
+    margin-bottom: 36px;
+    transition: transform 0.2s ease;
+}
+
+.brand-icon:hover {
+    transform: scale(1.08);
 }
 
 .side-nav {
     display: flex;
     flex-direction: column;
-    gap: 30px;
+    gap: 16px;
     width: 100%;
     align-items: center;
 }
 
 .nav-item {
-    font-size: 1.5rem;
     text-decoration: none;
-    color: #a0aec0;
-    width: 50px;
-    height: 50px;
+    color: #64748B;
+    width: 72px;
+    padding: 10px 4px;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     border-radius: 16px;
-    transition: all 0.3s ease;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    cursor: pointer;
 }
 
-.nav-item:hover, .nav-item.active {
-    background: #eef4fa;
-    color: #27ae60;
-    box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+.nav-item .nav-icon {
+    font-size: 1.45rem;
+    line-height: 1;
+    margin-bottom: 4px;
+    transition: transform 0.2s ease;
+}
+
+.nav-item .nav-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #64748B;
+    letter-spacing: 0.2px;
+    transition: color 0.2s ease;
+}
+
+.nav-item:hover {
+    background: #F1F5F9;
+    color: #0F172A;
+}
+
+.nav-item:hover .nav-icon {
+    transform: translateY(-2px);
+}
+
+.nav-item:hover .nav-label {
+    color: #0F172A;
+}
+
+.nav-item.active {
+    background: #ECFDF5;
+    color: #059669;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.15);
+}
+
+.nav-item.active .nav-icon {
+    transform: scale(1.12);
+}
+
+.nav-item.active .nav-label {
+    color: #059669;
+    font-weight: 700;
 }
 
 /* --- THE MAIN CONTENT AREA --- */
@@ -434,50 +479,100 @@ body {
         flex-direction: column;
         padding: 12px;
         gap: 14px;
-        padding-bottom: 84px; /* Space for bottom dock */
+        padding-bottom: 105px; /* Ample breathing room so cards & leaderboard scroll cleanly above dock */
     }
 
-    /* Transform vertical sidebar into native mobile bottom dock */
+    /* Transform vertical sidebar into native, premium mobile bottom dock */
     .sidebar {
         position: fixed;
         bottom: 0;
         left: 0;
         right: 0;
         width: 100%;
-        height: 64px;
-        padding: 0 16px;
+        height: auto;
+        min-height: 66px;
+        padding: 6px 8px calc(8px + env(safe-area-inset-bottom, 8px)) 8px;
         flex-direction: row;
         justify-content: space-around;
         align-items: center;
         border-radius: 20px 20px 0 0;
         background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-top: 1px solid rgba(0, 0, 0, 0.08);
+        backdrop-filter: blur(24px) saturate(180%);
+        -webkit-backdrop-filter: blur(24px) saturate(180%);
+        border-top: 1px solid rgba(226, 232, 240, 0.9);
         border-left: none;
         border-right: none;
         border-bottom: none;
-        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
-        z-index: 999;
+        box-shadow: 0 -4px 25px rgba(0, 0, 0, 0.08);
+        z-index: 10000; /* Stays above map, cards, and floating elements */
         margin: 0;
+        box-sizing: border-box;
     }
 
     .brand-icon {
-        display: none; /* Hide logo icon in bottom navigation dock */
+        display: none !important; /* Hide logo icon in bottom navigation dock */
     }
 
     .side-nav {
         flex-direction: row;
-        justify-content: space-around;
-        gap: 0;
+        justify-content: space-between;
+        align-items: center;
+        gap: 4px;
         width: 100%;
+        max-width: 480px;
+        margin: 0 auto;
+        padding: 0;
     }
 
     .nav-item {
-        width: 44px;
-        height: 44px;
-        font-size: 1.3rem;
+        flex: 1;
+        width: auto;
+        height: auto;
+        padding: 6px 2px;
         border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .nav-item .nav-icon {
+        font-size: 1.35rem;
+        line-height: 1;
+        margin-bottom: 3px;
+        transition: transform 0.2s ease;
+    }
+
+    .nav-item .nav-label {
+        font-size: 0.65rem;
+        font-weight: 600;
+        color: #64748B;
+        line-height: 1.1;
+        letter-spacing: 0.2px;
+        display: block;
+        transition: color 0.2s ease;
+    }
+
+    .nav-item:hover, .nav-item:active {
+        background: rgba(241, 245, 249, 0.8);
+    }
+
+    .nav-item.active {
+        background: #ECFDF5;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+    }
+
+    .nav-item.active .nav-icon {
+        transform: translateY(-2px) scale(1.1);
+    }
+
+    .nav-item.active .nav-label {
+        color: #059669;
+        font-weight: 700;
     }
 
     .main-content {

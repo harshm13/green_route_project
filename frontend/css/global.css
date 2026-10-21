@@ -434,15 +434,6 @@ body {
   z-index: 20001;
 }
 
-@media (max-width: 768px) {
-  /* Position SFX toggle neatly above bottom dock */
-  .sfx-floating-toggle {
-    bottom: 78px;
-    right: 14px;
-    z-index: 999;
-  }
-}
-
 @media (max-width: 480px) {
   body {
     font-size: 14px;
@@ -451,13 +442,6 @@ body {
   .btn {
     padding: 0.75rem 1.25rem;
     font-size: 0.95rem;
-  }
-  
-  .sfx-floating-toggle {
-    bottom: 76px;
-    right: 12px;
-    padding: 0.4rem 0.8rem;
-    font-size: 0.75rem;
   }
 }
 
@@ -593,7 +577,7 @@ body {
   position: fixed;
   bottom: 24px;
   right: 24px;
-  z-index: 9999;
+  z-index: 9990;
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -622,4 +606,27 @@ body {
   color: #FFFFFF;
   border-color: #34D399;
 }
+
+/* Mobile Placement: Guaranteed to float safely ABOVE bottom navigation docks (66px-70px dock) */
+@media (max-width: 768px) {
+  .sfx-floating-toggle {
+    position: fixed !important;
+    bottom: 84px !important;
+    right: 14px !important;
+    padding: 0.38rem 0.8rem !important;
+    font-size: 0.74rem !important;
+    z-index: 9990 !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12), 0 0 10px rgba(16, 185, 129, 0.25) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .sfx-floating-toggle {
+    bottom: 82px !important;
+    right: 12px !important;
+    padding: 0.34rem 0.72rem !important;
+    font-size: 0.7rem !important;
+  }
+}
+
 
