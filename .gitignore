@@ -37,3 +37,9 @@ ehthumbs.db
 # Project temp
 temp/
 scratch/
+
+# Physical Smart Bin QR Codes (Local Testing & Vinyl Print Badges)
+QR codes/
+QR\ codes/
+"QR codes/"
+QR_codes/
