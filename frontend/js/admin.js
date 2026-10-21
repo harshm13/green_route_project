@@ -363,7 +363,8 @@ async function renderBinTable() {
                        oninput="adjustFillLevel(${bin.id}, this.value)">
             </td>
             <td>
-                <button class="btn btn-outline btn-sm" style="padding: 3px 10px; font-size: 0.78rem;" onclick="toggleBinStatus(${bin.id})">
+                <button class="table-action-btn ${bin.is_full ? 'btn-mark-empty' : 'btn-mark-full'}" onclick="toggleBinStatus(${bin.id})" title="${bin.is_full ? 'Clear and empty this bin' : 'Mark bin full for pickup'}">
+                    <span>${bin.is_full ? '✨' : '📥'}</span>
                     ${bin.is_full ? 'Mark Empty' : 'Mark Full'}
                 </button>
             </td>
@@ -619,6 +620,13 @@ async function toggleSimulationMode() {
 // --- MULTI-TENANT SWITCHER & ESG MODAL CONTROLLERS ---
 async function onTenantChange(tenantId) {
     GreenRouteData.setActiveTenant(tenantId);
+    
+    // Sync both desktop and mobile dropdowns
+    const desktopSel = document.getElementById('tenant-select');
+    if (desktopSel && desktopSel.value !== tenantId) desktopSel.value = tenantId;
+    const mobileSel = document.getElementById('tenant-select-mobile');
+    if (mobileSel && mobileSel.value !== tenantId) mobileSel.value = tenantId;
+
     const coords = CAMPUS_COORDINATES[tenantId] || CAMPUS_COORDINATES["sou"];
     if (adminMap) {
         adminMap.flyTo(coords, 15, { duration: 1.2 });
@@ -829,9 +837,19 @@ function switchAdminMobileView(view) {
         if (btnOps) btnOps.classList.add('active');
         if (btnMap) btnMap.classList.remove('active');
     }
+function toggleAdminNavMobile() {
+    const drawer = document.getElementById('admin-mobile-nav-drawer');
+    const toggleBtn = document.getElementById('admin-nav-toggle-btn');
+    if (drawer) {
+        drawer.classList.toggle('open');
+    }
+    if (toggleBtn) {
+        toggleBtn.classList.toggle('active');
+    }
     if (window.GreenRouteSFX) GreenRouteSFX.playClick();
 }
 
+window.toggleAdminNavMobile = toggleAdminNavMobile;
 window.switchAdminMobileView = switchAdminMobileView;
 window.onTenantChange = onTenantChange;
 window.openEsgModal = openEsgModal;

@@ -13,45 +13,131 @@
 </head>
 <body class="admin-body">
 
-    <!-- Top Floating Navbar -->
-    <nav class="navbar">
-        <a href="index.html" class="brand">
-            <img src="assets/logo.svg" alt="GreenRoute">
-        </a>
-        <div class="nav-links" style="display: flex; align-items: center; gap: 12px;">
-            <!-- Multi-Tenant Campus Selector -->
-            <div style="display: flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.12); padding: 3px 10px; border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.3);">
-                <span style="font-size: 0.78rem; font-weight: 700; color: #10B981;">🏢 Campus:</span>
-                <select id="tenant-select" onchange="onTenantChange(this.value)" style="background: transparent; border: none; color: #047857; font-weight: 700; font-size: 0.82rem; cursor: pointer; outline: none;">
+    <!-- Top Floating Navbar (3-Zone Enterprise Architecture) -->
+    <nav class="navbar admin-navbar">
+        <!-- Zone 1: Brand & Multi-Tenant Campus Selector -->
+        <div class="admin-nav-brand-group">
+            <a href="index.html" class="brand" title="GreenRoute Home">
+                <img src="assets/logo.svg" alt="GreenRoute">
+            </a>
+            <div class="admin-nav-divider"></div>
+            <div class="tenant-pill" title="Active Campus Workspace">
+                <span class="tenant-icon">🏢</span>
+                <span class="tenant-label-tag">Campus:</span>
+                <select id="tenant-select" class="tenant-select-dropdown" onchange="onTenantChange(this.value)">
                     <option value="sou">Silver Oak University</option>
                     <option value="tech_hub">Ahmedabad Tech Hub</option>
                     <option value="metro_med">Metro Health City</option>
                 </select>
             </div>
+        </div>
 
-            <!-- ESG Statement Button -->
-            <button class="btn btn-outline" style="padding: 4px 10px; font-size: 0.8rem; border-radius: 8px; font-weight: 700; border: 1px solid #10B981; color: #047857; background: #ECFDF5; display: flex; align-items: center; gap: 5px; cursor: pointer;" onclick="openEsgModal()">
-                <span>📊</span> ESG Report
+        <!-- Zone 2: Primary Navigation Tabs (Segmented Control Dock) -->
+        <div class="admin-nav-center-tabs">
+            <a href="admin.html" class="admin-tab-btn active" title="Fleet Command Center">
+                <span class="tab-icon">🗺️</span>
+                <span class="tab-text">Command Center</span>
+            </a>
+            <a href="driver.html" class="admin-tab-btn" title="Driver Dispatch View">
+                <span class="tab-icon">🚚</span>
+                <span class="tab-text">Driver View</span>
+            </a>
+            <a href="citizen.html" class="admin-tab-btn" title="Citizen Cleanliness Portal">
+                <span class="tab-icon">🌱</span>
+                <span class="tab-text">Citizen App</span>
+            </a>
+            <a href="approvals.html" class="admin-tab-btn" title="Pending Pickup Approvals">
+                <span class="tab-icon">✅</span>
+                <span class="tab-text">Approvals</span>
+                <span class="badge" id="admin-pending-badge">0</span>
+            </a>
+        </div>
+
+        <!-- Zone 3: Admin Quick Tools, IoT Telemetry & Session -->
+        <div class="admin-nav-actions-group">
+            <button class="nav-tool-btn btn-qr" onclick="openQrCenterModal()" title="Print physical vinyl QR bin stickers">
+                <span>🖨️</span>
+                <span class="tool-btn-text">QR Labels</span>
             </button>
 
-            <!-- Physical QR Label Center Button -->
-            <button class="btn btn-outline" style="padding: 4px 10px; font-size: 0.8rem; border-radius: 8px; font-weight: 700; border: 1px solid #0EA5E9; color: #0284C7; background: #F0F9FF; display: flex; align-items: center; gap: 5px; cursor: pointer;" onclick="openQrCenterModal()">
-                <span>🖨️</span> QR Labels
+            <button class="nav-tool-btn btn-esg" onclick="openEsgModal()" title="View campus ESG sustainability report">
+                <span>📊</span>
+                <span class="tool-btn-text">ESG Report</span>
             </button>
+
+            <div class="admin-nav-divider"></div>
 
             <!-- WebSocket Telemetry Status -->
-            <span id="telemetry-status-pill" style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: 700; padding: 3px 8px; border-radius: 20px; background: rgba(59, 130, 246, 0.12); color: #2563EB; border: 1px solid rgba(59, 130, 246, 0.25);">
-                <span class="pulse-dot" style="background:#3B82F6; width:6px; height:6px; border-radius:50%; display:inline-block;"></span>
+            <span id="telemetry-status-pill" class="admin-telemetry-badge" title="Live Telemetry WebSocket Stream">
+                <span class="pulse-dot"></span>
                 <span id="telemetry-status-text">IoT Hub 📡</span>
             </span>
 
-            <a href="citizen.html"><span class="icon">🌱</span> Citizen App</a>
-            <a href="admin.html" class="active"><span class="icon">🗺️</span> Command Center</a>
-            <a href="driver.html"><span class="icon">🚚</span> Driver View</a>
-            <a href="approvals.html"><span class="icon">✅</span> Approvals <span class="badge" id="admin-pending-badge">0</span></a>
-            <a href="#" onclick="logoutUser(event)" class="btn-logout"><span class="icon">🚪</span> Logout</a>
+            <a href="#" onclick="logoutUser(event)" class="admin-nav-logout-btn" title="Sign out of Command Center">
+                <span>🚪</span>
+                <span class="logout-text">Logout</span>
+            </a>
+
+            <!-- Mobile Drawer Toggle Hamburger -->
+            <button class="admin-hamburger-btn" id="admin-nav-toggle-btn" onclick="toggleAdminNavMobile()" aria-label="Toggle Navigation Menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
         </div>
     </nav>
+
+    <!-- MOBILE NAVIGATION DRAWER (Slide-down Sheet) -->
+    <div class="admin-mobile-nav-drawer" id="admin-mobile-nav-drawer">
+        <div class="mobile-drawer-header">
+            <span class="mobile-drawer-title">Navigation &amp; Operations</span>
+            <button class="mobile-drawer-close" onclick="toggleAdminNavMobile()">✕</button>
+        </div>
+        <div class="mobile-drawer-section">
+            <div class="mobile-drawer-label">Active Campus Workspace</div>
+            <div class="tenant-pill mobile-tenant-pill">
+                <span class="tenant-icon">🏢</span>
+                <select id="tenant-select-mobile" class="tenant-select-dropdown" onchange="onTenantChange(this.value); const d=document.getElementById('tenant-select'); if(d) d.value=this.value;">
+                    <option value="sou">Silver Oak University</option>
+                    <option value="tech_hub">Ahmedabad Tech Hub</option>
+                    <option value="metro_med">Metro Health City</option>
+                </select>
+            </div>
+        </div>
+        <div class="mobile-drawer-section">
+            <div class="mobile-drawer-label">Core Pages</div>
+            <div class="mobile-links-grid">
+                <a href="admin.html" class="mobile-nav-link active">
+                    <span>🗺️</span> Command Center
+                </a>
+                <a href="driver.html" class="mobile-nav-link">
+                    <span>🚚</span> Driver View
+                </a>
+                <a href="citizen.html" class="mobile-nav-link">
+                    <span>🌱</span> Citizen App
+                </a>
+                <a href="approvals.html" class="mobile-nav-link">
+                    <span>✅</span> Approvals
+                </a>
+            </div>
+        </div>
+        <div class="mobile-drawer-section">
+            <div class="mobile-drawer-label">Management Tools</div>
+            <div class="mobile-tools-grid">
+                <button class="nav-tool-btn btn-qr" style="width:100%; justify-content:center;" onclick="openQrCenterModal(); toggleAdminNavMobile();">
+                    <span>🖨️</span> Physical QR Labels
+                </button>
+                <button class="nav-tool-btn btn-esg" style="width:100%; justify-content:center;" onclick="openEsgModal(); toggleAdminNavMobile();">
+                    <span>📊</span> ESG Sustainability Report
+                </button>
+            </div>
+        </div>
+        <div class="mobile-drawer-footer">
+            <a href="#" onclick="logoutUser(event)" class="admin-nav-logout-btn" style="width: 100%; justify-content: center; padding: 10px;">
+                <span>🚪</span> Sign Out
+            </a>
+        </div>
+    </div>
 
     <!-- MOBILE VIEW MODE SWITCHER (Visible on screens <= 900px) -->
     <div class="admin-mobile-switcher">
@@ -127,8 +213,8 @@
                     </div>
                 </div>
 
-                <button class="btn btn-primary" style="width: 100%; padding: 0.65rem; font-size: 0.92rem; border-radius: 10px;" onclick="calculateAndDisplayRoute()">
-                    ⚡ Recalculate Road Route (OSRM)
+                <button class="btn-osrm-calc" onclick="calculateAndDisplayRoute()">
+                    <span>⚡</span> Recalculate Road Route (OSRM)
                 </button>
                 <button class="sim-toggle-btn" id="sim-toggle-btn" onclick="toggleSimulationMode()">
                     <span>📡</span> Live Telemetry Simulator: OFF
@@ -177,8 +263,8 @@
                 <div id="forecast-list" style="display: flex; flex-direction: column; gap: 5px; max-height: 120px; overflow-y: auto; margin-bottom: 8px; padding-right: 2px;">
                     <!-- Populated dynamically by JS -->
                 </div>
-                <button class="btn btn-outline" id="btn-preemptive-dispatch" style="width: 100%; font-size: 0.78rem; padding: 5px; font-weight: 700; border-color: #F59E0B; color: #B45309;" onclick="triggerPreemptiveDispatch()">
-                    ⚡ Preemptive Route Dispatch
+                <button class="btn-preemptive-dispatch" id="btn-preemptive-dispatch" onclick="triggerPreemptiveDispatch()">
+                    <span>⚡</span> Preemptive Route Dispatch
                 </button>
             </div>
 
@@ -215,22 +301,21 @@
         <!-- RIGHT MAIN STAGE: LEAFLET MAP & FLEET MANIFEST -->
         <main class="admin-main-stage">
             
-            <!-- Floating Top Banner on Map -->
+            <!-- Floating Top Banner on Map (Clean Status & Quick Actions) -->
             <div class="map-status-floating-banner">
-                <div class="map-status-text">
-                    <span id="route-indicator-dot" style="width: 10px; height: 10px; border-radius: 50%; background: #10B981; display: inline-block;"></span>
-                    <span id="route-status-msg">Optimal Route Active: 5 Stops Selected</span>
+                <div class="map-status-left">
+                    <span class="route-beacon-dot" id="route-indicator-dot"></span>
+                    <div class="route-info-group">
+                        <span class="route-headline" id="route-status-msg">Optimal Route Active: 5 Stops Selected</span>
+                    </div>
                 </div>
-                <div style="display: flex; gap: 8px;">
-                    <button class="btn btn-outline btn-sm" onclick="exportManifestCsv()">
-                        📥 Export Manifest (CSV)
+                <div class="map-status-actions">
+                    <button class="banner-action-btn" onclick="exportManifestCsv()" title="Export route stop manifest as CSV spreadsheet">
+                        <span>📥</span> Export CSV
                     </button>
-                    <button class="btn btn-outline btn-sm" onclick="toggleManifestDrawer()">
-                        📋 Fleet Manifest (<span id="manifest-count">0</span>)
+                    <button class="banner-action-btn banner-btn-manifest" id="btn-toggle-manifest" onclick="toggleManifestDrawer()" title="View and control bin stops in route manifest">
+                        <span>📋</span> Fleet Manifest (<span id="manifest-count">0</span>)
                     </button>
-                    <a href="driver.html" class="btn btn-primary btn-sm" style="text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-                        🚚 Driver Cab
-                    </a>
                 </div>
             </div>
 

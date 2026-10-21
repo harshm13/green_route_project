@@ -3,7 +3,347 @@
 .admin-body {
     background: #F3F4F6;
     overflow-x: hidden;
-    padding-top: 80px;
+    padding-top: 84px;
+}
+
+/* ==========================================================================
+   ADMIN COMMAND CENTER NAVBAR (ENTERPRISE 3-ZONE ARCHITECTURE)
+   ========================================================================== */
+.navbar.admin-navbar {
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    max-width: 1560px;
+    height: 58px;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(229, 231, 235, 0.85);
+    border-radius: 9999px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.02);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.25rem;
+    z-index: 1000;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-sizing: border-box;
+}
+
+/* Zone 1: Brand & Multi-Tenant Campus Selector */
+.admin-nav-brand-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.admin-nav-brand-group .brand {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.admin-nav-brand-group .brand img {
+    height: 30px;
+    width: auto;
+}
+
+.admin-nav-divider {
+    width: 1px;
+    height: 22px;
+    background: #E5E7EB;
+}
+
+.tenant-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #F0FDF4;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    padding: 4px 12px;
+    border-radius: 9999px;
+    transition: all 0.2s ease;
+}
+
+.tenant-pill:hover, .tenant-pill:focus-within {
+    border-color: #10B981;
+    background: #ECFDF5;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+}
+
+.tenant-icon {
+    font-size: 0.85rem;
+}
+
+.tenant-label-tag {
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #059669;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.tenant-select-dropdown {
+    background: transparent;
+    border: none;
+    color: #065F46;
+    font-weight: 700;
+    font-size: 0.82rem;
+    font-family: inherit;
+    cursor: pointer;
+    outline: none;
+}
+
+/* Zone 2: Primary Navigation Tabs (Segmented Control Dock) */
+.admin-nav-center-tabs {
+    display: flex;
+    align-items: center;
+    background: rgba(243, 244, 246, 0.9);
+    padding: 3px;
+    border-radius: 9999px;
+    border: 1px solid rgba(229, 231, 235, 0.8);
+    gap: 2px;
+}
+
+.admin-tab-btn {
+    text-decoration: none;
+    color: #4B5563;
+    font-weight: 600;
+    font-size: 0.84rem;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+}
+
+.admin-tab-btn:hover {
+    color: #047857;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.admin-tab-btn.active {
+    background: linear-gradient(135deg, #059669 0%, #10B981 100%);
+    color: #FFFFFF;
+    font-weight: 700;
+    box-shadow: 0 3px 10px rgba(16, 185, 129, 0.35);
+}
+
+.admin-tab-btn .badge {
+    margin-left: 2px;
+    font-size: 0.7rem;
+    padding: 0.1rem 0.45rem;
+}
+
+/* Zone 3: Admin Quick Tools, IoT Status & Logout */
+.admin-nav-actions-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.nav-tool-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+    border: 1.5px solid transparent;
+}
+
+.nav-tool-btn.btn-qr {
+    background: #F0F9FF;
+    border-color: rgba(14, 165, 233, 0.35);
+    color: #0284C7;
+}
+
+.nav-tool-btn.btn-qr:hover {
+    background: #E0F2FE;
+    border-color: #0284C7;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.18);
+}
+
+.nav-tool-btn.btn-esg {
+    background: #ECFDF5;
+    border-color: rgba(16, 185, 129, 0.35);
+    color: #059669;
+}
+
+.nav-tool-btn.btn-esg:hover {
+    background: #D1FAE5;
+    border-color: #10B981;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.18);
+}
+
+.admin-telemetry-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563EB;
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    white-space: nowrap;
+}
+
+.admin-nav-logout-btn {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #DC2626;
+    background: #FEF2F2;
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    padding: 5px 12px;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.admin-nav-logout-btn:hover {
+    background: #FEE2E2;
+    border-color: #EF4444;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(239, 68, 68, 0.15);
+}
+
+/* Mobile Hamburger Button (hidden on desktop) */
+.admin-hamburger-btn {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 36px;
+    height: 36px;
+    background: #F3F4F6;
+    border: 1px solid #E5E7EB;
+    border-radius: 10px;
+    cursor: pointer;
+    gap: 4px;
+    padding: 0;
+}
+
+.admin-hamburger-btn span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: #374151;
+    border-radius: 2px;
+    transition: all 0.2s ease;
+}
+
+/* Slide-Down Mobile Navigation Drawer */
+.admin-mobile-nav-drawer {
+    display: none;
+    position: fixed;
+    top: 74px;
+    left: 12px;
+    right: 12px;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    padding: 16px;
+    z-index: 9999;
+    flex-direction: column;
+    gap: 14px;
+    animation: mobileSlideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.admin-mobile-nav-drawer.open {
+    display: flex;
+}
+
+.mobile-drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #F3F4F6;
+    padding-bottom: 8px;
+}
+
+.mobile-drawer-title {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #111827;
+}
+
+.mobile-drawer-close {
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    color: #6B7280;
+    cursor: pointer;
+    padding: 2px 6px;
+}
+
+.mobile-drawer-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mobile-drawer-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #6B7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mobile-tenant-pill {
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: flex-start;
+}
+
+.mobile-links-grid, .mobile-tools-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.mobile-nav-link {
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #F9FAFB;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #374151;
+    transition: all 0.2s ease;
+}
+
+.mobile-nav-link.active {
+    background: #ECFDF5;
+    border-color: #10B981;
+    color: #047857;
 }
 
 /* Main Command Center Layout */
@@ -326,31 +666,209 @@
     z-index: 1;
 }
 
-/* Floating Map Overlay Header */
+/* Floating Map Overlay Header (Clean Status & Quick Actions) */
 .map-status-floating-banner {
     position: absolute;
-    top: 15px;
-    left: 20px;
-    right: 20px;
+    top: 14px;
+    left: 18px;
+    right: 18px;
     z-index: 10;
     background: rgba(255, 255, 255, 0.94);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    border-radius: var(--border-radius-soft);
-    padding: 0.8rem 1.5rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    border-radius: 14px;
+    padding: 0.65rem 1.25rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.02);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 12px;
 }
 
-.map-status-text {
+.map-status-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.route-beacon-dot {
+    width: 10px;
+    height: 10px;
+    min-width: 10px;
+    border-radius: 50%;
+    background: #10B981;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: pulseDot 2s infinite;
+}
+
+.route-info-group {
+    font-size: 0.88rem;
     font-weight: 700;
-    font-size: 0.95rem;
     color: var(--eco-text-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.map-status-actions {
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-shrink: 0;
+}
+
+.banner-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+    border: 1.5px solid #D1D5DB;
+    background: #FFFFFF;
+    color: #374151;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
+}
+
+.banner-action-btn:hover {
+    border-color: #10B981;
+    color: #047857;
+    background: #F0FDF4;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+.banner-action-btn:active {
+    transform: translateY(0);
+}
+
+.banner-action-btn.banner-btn-manifest {
+    border-color: rgba(16, 185, 129, 0.4);
+    background: #F0FDF4;
+    color: #065F46;
+}
+
+.banner-action-btn.banner-btn-manifest:hover {
+    background: #ECFDF5;
+    border-color: #10B981;
+}
+
+#manifest-count {
+    background: #10B981;
+    color: #FFFFFF;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 1px 7px;
+    border-radius: 9999px;
+    margin-left: 2px;
+}
+
+/* Sidebar High-Impact Action CTAs */
+.btn-osrm-calc {
+    width: 100%;
+    padding: 0.7rem 1rem;
+    font-size: 0.92rem;
+    font-weight: 700;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #059669 0%, #10B981 100%);
+    color: #FFFFFF;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+}
+
+.btn-osrm-calc:hover {
+    background: linear-gradient(135deg, #047857 0%, #059669 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(16, 185, 129, 0.45);
+}
+
+.btn-osrm-calc:active {
+    transform: translateY(0);
+}
+
+.btn-preemptive-dispatch {
+    width: 100%;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 7px 10px;
+    border-radius: 8px;
+    background: #FFFBEB;
+    color: #B45309;
+    border: 1.5px solid #F59E0B;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.btn-preemptive-dispatch:hover {
+    background: #FEF3C7;
+    border-color: #D97706;
+    color: #92400E;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(245, 158, 11, 0.2);
+}
+
+/* Bin Table Action Buttons in Manifest Drawer */
+.table-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    border: 1.5px solid transparent;
+    outline: none;
+    white-space: nowrap;
+}
+
+.table-action-btn.btn-mark-empty {
+    background: #ECFDF5;
+    color: #047857;
+    border-color: rgba(16, 185, 129, 0.4);
+}
+
+.table-action-btn.btn-mark-empty:hover {
+    background: #10B981;
+    color: #FFFFFF;
+    border-color: #10B981;
+    transform: scale(1.03);
+    box-shadow: 0 3px 8px rgba(16, 185, 129, 0.25);
+}
+
+.table-action-btn.btn-mark-full {
+    background: #FEF3C7;
+    color: #B45309;
+    border-color: rgba(245, 158, 11, 0.4);
+}
+
+.table-action-btn.btn-mark-full:hover {
+    background: #F59E0B;
+    color: #FFFFFF;
+    border-color: #F59E0B;
+    transform: scale(1.03);
+    box-shadow: 0 3px 8px rgba(245, 158, 11, 0.25);
 }
 
 /* Bottom Collapsible Fleet Manifest Drawer */
@@ -448,9 +966,50 @@
    RESPONSIVE DESIGN ADAPTATIONS (MOBILE, TABLET, FOLDABLE, ULTRA-WIDE)
    ========================================================================== */
 
+@media (max-width: 1240px) {
+    .tool-btn-text {
+        display: none;
+    }
+    .tenant-label-tag {
+        display: none;
+    }
+    .logout-text {
+        display: none;
+    }
+    .admin-tab-btn {
+        padding: 5px 10px;
+        font-size: 0.8rem;
+    }
+    .banner-action-btn {
+        padding: 5px 10px;
+        font-size: 0.78rem;
+    }
+}
+
+@media (max-width: 960px) {
+    .admin-nav-center-tabs {
+        display: none !important;
+    }
+    .nav-tool-btn {
+        display: none !important;
+    }
+    .admin-telemetry-badge {
+        display: none !important;
+    }
+    .admin-nav-logout-btn {
+        display: none !important;
+    }
+    .admin-nav-divider {
+        display: none !important;
+    }
+    .admin-hamburger-btn {
+        display: flex !important;
+    }
+}
+
 @media (max-width: 900px) {
     .admin-body {
-        padding-top: 68px;
+        padding-top: 76px;
     }
 
     .admin-mobile-switcher {
@@ -459,7 +1018,7 @@
 
     .admin-layout {
         flex-direction: column;
-        height: calc(100dvh - 120px);
+        height: calc(100dvh - 128px);
         overflow: hidden;
     }
     
@@ -481,11 +1040,41 @@
         flex: 1;
         width: 100% !important;
         height: 100% !important;
-        min-height: calc(100dvh - 120px) !important;
+        min-height: calc(100dvh - 128px) !important;
     }
 
     .map-viewport.mobile-hidden {
         display: none !important;
+    }
+
+    .map-status-floating-banner {
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        padding: 0.5rem 0.8rem;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .map-status-left {
+        justify-content: center;
+    }
+
+    .route-info-group {
+        font-size: 0.78rem;
+        text-align: center;
+    }
+
+    .map-status-actions {
+        justify-content: center;
+    }
+
+    .banner-action-btn {
+        flex: 1;
+        justify-content: center;
+        padding: 6px 10px;
+        font-size: 0.76rem;
     }
 
     .manifest-drawer {
@@ -507,6 +1096,10 @@
 }
 
 @media (max-width: 480px) {
+    .navbar.admin-navbar {
+        padding: 0 0.75rem;
+    }
+
     .sidebar-header h2 {
         font-size: 1.15rem;
     }
