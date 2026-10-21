@@ -99,6 +99,33 @@
             }
         }
 
+        @media (max-width: 768px) {
+            body.driver-body {
+                padding-top: 110px;
+            }
+            .driver-navbar {
+                height: auto;
+                padding: 10px 14px;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .driver-hud-strip {
+                width: 100%;
+                justify-content: space-between;
+                gap: 8px;
+                border-top: 1px solid rgba(255, 255, 255, 0.08);
+                padding-top: 6px;
+            }
+            .cockpit-container {
+                padding: 10px;
+                gap: 12px;
+            }
+            #driver-map {
+                height: 280px !important;
+                border-radius: 14px;
+            }
+        }
+
         /* Cockpit Cards */
         .cockpit-card {
             background: var(--driver-card);

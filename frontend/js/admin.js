@@ -807,6 +807,32 @@ function downloadAllQrLabelsZip() {
     window.location.href = downloadUrl;
 }
 
+function switchAdminMobileView(view) {
+    const sidebar = document.querySelector('.admin-sidebar');
+    const mapViewport = document.querySelector('.map-viewport');
+    const btnMap = document.getElementById('btn-mobile-map');
+    const btnOps = document.getElementById('btn-mobile-ops');
+
+    if (view === 'map') {
+        if (sidebar) sidebar.classList.add('mobile-hidden');
+        if (mapViewport) mapViewport.classList.remove('mobile-hidden');
+        if (btnMap) btnMap.classList.add('active');
+        if (btnOps) btnOps.classList.remove('active');
+        if (adminMap) {
+            setTimeout(() => {
+                adminMap.invalidateSize();
+            }, 150);
+        }
+    } else {
+        if (sidebar) sidebar.classList.remove('mobile-hidden');
+        if (mapViewport) mapViewport.classList.add('mobile-hidden');
+        if (btnOps) btnOps.classList.add('active');
+        if (btnMap) btnMap.classList.remove('active');
+    }
+    if (window.GreenRouteSFX) GreenRouteSFX.playClick();
+}
+
+window.switchAdminMobileView = switchAdminMobileView;
 window.onTenantChange = onTenantChange;
 window.openEsgModal = openEsgModal;
 window.closeEsgModal = closeEsgModal;

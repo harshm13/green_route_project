@@ -370,6 +370,32 @@
             .stats-strip { grid-template-columns: 1fr 1fr; }
             .role-cards-grid { grid-template-columns: 1fr; }
         }
+
+        @media (max-width: 550px) {
+            .landing-hero {
+                padding: 6rem 1rem 3rem;
+            }
+            .hero-headline {
+                font-size: clamp(2rem, 8.5vw, 2.5rem);
+            }
+            .hero-subheadline {
+                font-size: 1.05rem;
+                margin-bottom: 1.8rem;
+            }
+            .stats-strip {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            .hero-actions {
+                flex-direction: column;
+                gap: 10px;
+                width: 100%;
+            }
+            .hero-actions .btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
     </style>
 </head>
 <body>

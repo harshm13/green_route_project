@@ -53,6 +53,16 @@
         </div>
     </nav>
 
+    <!-- MOBILE VIEW MODE SWITCHER (Visible on screens <= 900px) -->
+    <div class="admin-mobile-switcher">
+        <button class="admin-mobile-tab active" id="btn-mobile-map" onclick="switchAdminMobileView('map')">
+            <span>🗺️</span> Map &amp; Routes
+        </button>
+        <button class="admin-mobile-tab" id="btn-mobile-ops" onclick="switchAdminMobileView('ops')">
+            <span>⚙️</span> Fleet Operations
+        </button>
+    </div>
+
     <div class="admin-layout">
         
         <!-- LEFT CONTROL & OPERATIONS SIDEBAR -->

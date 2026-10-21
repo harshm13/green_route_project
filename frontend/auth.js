@@ -103,3 +103,49 @@ window.getCurrentUser = getCurrentUser;
 window.requireAuth = requireAuth;
 window.logoutUser = logoutUser;
 window.seedDemoAccount = seedDemoAccount;
+
+// --- AUTO RESPONSIVE MOBILE NAVBAR INITIALIZER ---
+document.addEventListener('DOMContentLoaded', () => {
+    const navbar = document.querySelector('.navbar');
+    if (!navbar) return;
+    
+    // Inject mobile toggle button if not already present
+    if (!navbar.querySelector('.navbar-toggle')) {
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'navbar-toggle';
+        toggleBtn.setAttribute('aria-label', 'Toggle Navigation Menu');
+        toggleBtn.innerHTML = `
+            <span></span>
+            <span></span>
+            <span></span>
+        `;
+        
+        const navLinks = navbar.querySelector('.nav-links');
+        if (navLinks) {
+            toggleBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleBtn.classList.toggle('active');
+                navLinks.classList.toggle('nav-mobile-open');
+            });
+            
+            // Close mobile nav when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!navbar.contains(e.target) && navLinks.classList.contains('nav-mobile-open')) {
+                    toggleBtn.classList.remove('active');
+                    navLinks.classList.remove('nav-mobile-open');
+                }
+            });
+            
+            // Close mobile nav when clicking any link
+            navLinks.querySelectorAll('a').forEach(a => {
+                a.addEventListener('click', () => {
+                    toggleBtn.classList.remove('active');
+                    navLinks.classList.remove('nav-mobile-open');
+                });
+            });
+            
+            navbar.appendChild(toggleBtn);
+        }
+    }
+});
+

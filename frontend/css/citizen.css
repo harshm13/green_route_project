@@ -8,20 +8,24 @@
 body {
     background: radial-gradient(circle at top left, #dcfce7, #e0f2fe, #f3e8ff);
     color: #333; 
-    height: 100dvh;
+    min-height: 100dvh;
+    height: auto;
     margin: 0 !important;
     padding: 0 !important;
-    overflow: hidden; 
+    overflow-x: hidden;
+    overflow-y: auto; 
     display: block !important;
+    -webkit-font-smoothing: antialiased;
 }
 
 .dashboard-wrapper {
     display: flex;
-    height: 100dvh;
+    min-height: 100dvh;
     padding: 24px;
     gap: 30px;
     max-width: 1600px;
     margin: 0 auto !important;
+    box-sizing: border-box;
 }
 
 /* --- THE SIDEBAR --- */
@@ -402,3 +406,165 @@ body {
     0% { transform: scale(1); filter: drop-shadow(0 0 4px #F59E0B); }
     100% { transform: scale(1.15) rotate(4deg); filter: drop-shadow(0 0 14px #EF4444); }
 }
+
+/* ==========================================================================
+   RESPONSIVE DESIGN ADAPTATIONS (MOBILE, TABLET, FOLDABLE, ULTRA-WIDE)
+   ========================================================================== */
+
+/* Tablet & Intermediate Screens (<= 1024px) */
+@media (max-width: 1024px) {
+    .dashboard-wrapper {
+        padding: 16px;
+        gap: 18px;
+    }
+
+    .bento-grid {
+        grid-template-columns: 1fr; /* Stack into single column */
+        gap: 18px;
+    }
+
+    .sidebar {
+        width: 76px;
+    }
+}
+
+/* Mobile Screens (<= 768px) */
+@media (max-width: 768px) {
+    .dashboard-wrapper {
+        flex-direction: column;
+        padding: 12px;
+        gap: 14px;
+        padding-bottom: 84px; /* Space for bottom dock */
+    }
+
+    /* Transform vertical sidebar into native mobile bottom dock */
+    .sidebar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: 64px;
+        padding: 0 16px;
+        flex-direction: row;
+        justify-content: space-around;
+        align-items: center;
+        border-radius: 20px 20px 0 0;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-top: 1px solid rgba(0, 0, 0, 0.08);
+        border-left: none;
+        border-right: none;
+        border-bottom: none;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+        z-index: 9999;
+        margin: 0;
+    }
+
+    .brand-icon {
+        display: none; /* Hide logo icon in bottom navigation dock */
+    }
+
+    .side-nav {
+        flex-direction: row;
+        justify-content: space-around;
+        gap: 0;
+        width: 100%;
+    }
+
+    .nav-item {
+        width: 44px;
+        height: 44px;
+        font-size: 1.3rem;
+        border-radius: 12px;
+    }
+
+    .main-content {
+        padding-right: 0;
+    }
+
+    /* Top Header */
+    .top-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .top-header h2 {
+        font-size: 1.4rem;
+    }
+
+    .user-mini {
+        width: 100%;
+        justify-content: space-between;
+        padding: 6px 14px;
+    }
+
+    /* Bento Cards & Internal Grids */
+    .bento-card {
+        padding: 18px 16px;
+        border-radius: 20px;
+    }
+
+    .stats-row, .bottom-row {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    /* Action Banner */
+    .action-banner {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+        padding: 22px 18px;
+    }
+
+    .banner-actions {
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .btn-banner, .btn-banner-outline {
+        width: 100%;
+        text-align: center;
+        padding: 12px;
+    }
+
+    /* Map Card on Mobile */
+    #citizen-map {
+        height: 260px !important;
+        border-radius: 14px;
+    }
+
+    /* Viewfinder & QR on small devices */
+    .vision-container {
+        height: 170px;
+    }
+
+    .sample-chips-row {
+        flex-wrap: wrap;
+    }
+}
+
+/* Very Small Mobile Phones (<= 400px) */
+@media (max-width: 400px) {
+    .dashboard-wrapper {
+        padding: 8px;
+    }
+
+    .bento-card {
+        padding: 14px 12px;
+    }
+
+    .top-header h2 {
+        font-size: 1.25rem;
+    }
+
+    .waste-type-selector {
+        grid-template-columns: 1fr;
+    }
+}
+

@@ -406,20 +406,122 @@
     outline: 1px solid transparent !important;
 }
 
-/* Responsive adjustments */
-@media (max-width: 992px) {
+/* ---------------------------------- */
+/* MOBILE ADAPTIVE VIEW SWITCHER      */
+/* ---------------------------------- */
+.admin-mobile-switcher {
+    display: none;
+    background: #0F172A;
+    padding: 6px 12px;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: sticky;
+    top: 65px;
+    z-index: 99;
+}
+
+.admin-mobile-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: #1E293B;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94A3B8;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.admin-mobile-tab.active {
+    background: #10B981;
+    color: #FFFFFF;
+    border-color: #10B981;
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN ADAPTATIONS (MOBILE, TABLET, FOLDABLE, ULTRA-WIDE)
+   ========================================================================== */
+
+@media (max-width: 900px) {
+    .admin-body {
+        padding-top: 68px;
+    }
+
+    .admin-mobile-switcher {
+        display: flex;
+    }
+
     .admin-layout {
         flex-direction: column;
-        height: auto;
+        height: calc(100dvh - 120px);
+        overflow: hidden;
     }
     
     .admin-sidebar {
-        width: 100%;
-        min-width: 100%;
-        max-height: 480px;
+        width: 100% !important;
+        min-width: 100% !important;
+        height: 100% !important;
+        max-height: none !important;
+        border-right: none;
+        border-bottom: 1px solid var(--eco-border);
+        padding: 14px 12px;
+    }
+
+    .admin-sidebar.mobile-hidden {
+        display: none !important;
     }
     
     .map-viewport {
-        min-height: 50dvh;
+        flex: 1;
+        width: 100% !important;
+        height: 100% !important;
+        min-height: calc(100dvh - 120px) !important;
+    }
+
+    .map-viewport.mobile-hidden {
+        display: none !important;
+    }
+
+    .manifest-drawer {
+        max-height: 180px;
+        padding: 10px;
+    }
+
+    .ticker-grid {
+        gap: 8px;
+    }
+
+    .ticker-box {
+        padding: 0.65rem 0.5rem;
+    }
+
+    .ticker-val {
+        font-size: 1.25rem;
     }
 }
+
+@media (max-width: 480px) {
+    .sidebar-header h2 {
+        font-size: 1.15rem;
+    }
+
+    .control-card {
+        padding: 12px 10px;
+    }
+
+    .filter-pills-row {
+        gap: 4px;
+    }
+
+    .filter-pill-btn {
+        padding: 4px 8px;
+        font-size: 0.72rem;
+    }
+}
+
