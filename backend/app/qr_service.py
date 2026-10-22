@@ -1,32 +1,47 @@
-"""
-GreenRoute Real QR Code & Physical Bin Label Service
-Generates production-grade, scannable QR codes and printable vinyl sticker badges
-for physical smart waste bins deployed in campuses, tech parks, and cities.
-"""
-
+import os
 import io
 import qrcode
 from qrcode.constants import ERROR_CORRECT_H
 from PIL import Image, ImageDraw, ImageFont
 from typing import Optional, Dict, Any, List
 import hashlib
+import hmac
 import zipfile
+from .auth_utils import SECRET_KEY
 
+DEFAULT_FRONTEND_URL = os.getenv("FRONTEND_URL", "http://127.0.0.1:5500")
 
-def get_bin_qr_payload(bin_id: int, tenant_id: str = "sou", base_url: str = "http://localhost:8000") -> str:
+def generate_bin_qr_token(bin_id: int, tenant_id: str = "sou") -> str:
+    """Computes a cryptographically verified, server-authenticated token for a physical smart bin."""
+    message = f"GREENROUTE:BIN:{tenant_id}:{bin_id}".encode("utf-8")
+    token = hmac.new(SECRET_KEY.encode("utf-8"), message, hashlib.sha256).hexdigest()[:16]
+    return token
+
+def verify_bin_qr_token(bin_id: int, tenant_id: str, token: str) -> bool:
+    """Verifies that a scanned QR token matches the server-signed identity for the bin."""
+    if not token:
+        return False
+    expected = generate_bin_qr_token(bin_id, tenant_id)
+    return hmac.compare_digest(expected.lower(), token.strip().lower())
+
+def get_bin_qr_payload(
+    bin_id: int,
+    tenant_id: str = "sou",
+    frontend_url: Optional[str] = None
+) -> str:
     """
     Constructs the canonical deep-link URL encoded into the physical smart bin QR sticker.
-    When scanned by a standard smartphone camera (iOS/Android) or the GreenRoute app,
-    it opens the Citizen app directly to this bin for instant verified deposit.
+    Points to the Citizen frontend URL with server-validated QR identity token.
     """
-    clean_base = base_url.rstrip("/")
-    return f"{clean_base}/citizen.html?bin_id={bin_id}&tenant={tenant_id}"
-
+    target_url = (frontend_url or DEFAULT_FRONTEND_URL).rstrip("/")
+    qr_token = generate_bin_qr_token(bin_id, tenant_id)
+    return f"{target_url}/citizen.html?bin_id={bin_id}&tenant={tenant_id}&qr_token={qr_token}"
 
 def generate_bin_qr_code(
     bin_id: int,
     tenant_id: str = "sou",
-    base_url: str = "http://localhost:8000",
+    frontend_url: Optional[str] = None,
+    base_url: Optional[str] = None, # Backwards compatibility alias
     fill_color: str = "#065F46",
     back_color: str = "#FFFFFF",
     box_size: int = 10,
@@ -36,7 +51,8 @@ def generate_bin_qr_code(
     Generates a high-resolution QR code image with Error Correction Level H (~30% recovery).
     High error correction ensures stickers scratched or soiled in outdoor weather remain 100% scannable.
     """
-    payload = get_bin_qr_payload(bin_id, tenant_id, base_url)
+    url = frontend_url or base_url or DEFAULT_FRONTEND_URL
+    payload = get_bin_qr_payload(bin_id, tenant_id, frontend_url=url)
     
     qr = qrcode.QRCode(
         version=None,
@@ -53,7 +69,8 @@ def generate_bin_qr_code(
 
 def generate_printable_bin_label(
     bin_data: Dict[str, Any],
-    base_url: str = "http://localhost:8000"
+    frontend_url: Optional[str] = None,
+    base_url: Optional[str] = None
 ) -> bytes:
     """
     Generates an industrial-ready, high-resolution physical bin sticker label (700 x 950 px).
@@ -65,7 +82,7 @@ def generate_printable_bin_label(
     - Scannable QR code matrix
     - Deposit instructions
     - Accepted waste material symbols
-    - Unique cryptographic tamper serial
+    - Unique cryptographic tamper serial verified by server
     """
     width = 700
     height = 950
@@ -83,11 +100,9 @@ def generate_printable_bin_label(
     draw.rectangle([(8, 8), (width - 8, header_height)], fill=(6, 95, 70))  # #065F46
     
     # Header Title
-    # Use default font or load fallback
     title_text = "GREENROUTE SMART ECO-BIN"
     subtitle_text = "CAMPUS CIRCULAR ZERO-WASTE NETWORK"
     
-    # Simple centered text using basic drawing
     draw.text((width // 2, 40), title_text, fill=(255, 255, 255), anchor="mm")
     draw.text((width // 2, 75), subtitle_text, fill=(167, 243, 208), anchor="mm")
     
@@ -108,15 +123,15 @@ def generate_printable_bin_label(
     draw.text((width // 2, 192), geo_badge_text, fill=(4, 120, 87), anchor="mm")
     
     # QR Code Generation (360x360 px)
+    effective_url = frontend_url or base_url or DEFAULT_FRONTEND_URL
     qr_img = generate_bin_qr_code(
         bin_id=bin_id,
         tenant_id=bin_data.get("tenant_id", "sou"),
-        base_url=base_url,
+        frontend_url=effective_url,
         fill_color="#065F46",
         box_size=9,
         border=1
     )
-    qr_w, qr_h = qr_img.size
     qr_target_size = 380
     qr_resized = qr_img.resize((qr_target_size, qr_target_size), Image.Resampling.NEAREST)
     
@@ -150,9 +165,8 @@ def generate_printable_bin_label(
     draw.text((width // 2, mat_y + 48), "    ".join(materials), fill=(4, 120, 87), anchor="mm")
     
     # Unique Cryptographic Security Serial at bottom
-    serial_seed = f"GREENROUTE-{tenant_id}-{bin_id}-{lat}-{lng}"
-    tamper_hash = hashlib.sha256(serial_seed.encode("utf-8")).hexdigest()[:12].upper()
-    serial_code = f"TAG UID: GR-{tenant_id}-{bin_id:04d}-{tamper_hash}  |  OFFICIAL HARDWARE SPEC REV 2.4"
+    verified_token = generate_bin_qr_token(bin_id, bin_data.get("tenant_id", "sou"))
+    serial_code = f"TAG UID: GR-{tenant_id}-{bin_id:04d}-{verified_token.upper()}  |  OFFICIAL HARDWARE SPEC REV 2.4"
     
     draw.rectangle([(8, height - 42), (width - 8, height - 8)], fill=(241, 245, 249))
     draw.text((width // 2, height - 25), serial_code, fill=(100, 116, 139), anchor="mm")
@@ -163,21 +177,26 @@ def generate_printable_bin_label(
     return buf.getvalue()
 
 
-def generate_all_labels_zip(bins_list: List[Dict[str, Any]], base_url: str = "http://localhost:8000") -> bytes:
+def generate_all_labels_zip(
+    bins_list: List[Dict[str, Any]],
+    frontend_url: Optional[str] = None,
+    base_url: Optional[str] = None
+) -> bytes:
     """
     Batches all printable bin labels into a single compressed ZIP file for production printing.
     """
+    effective_url = frontend_url or base_url or DEFAULT_FRONTEND_URL
     zip_buf = io.BytesIO()
     with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as zf:
         for b in bins_list:
             b_id = b.get("id", 1)
             b_name = b.get("name", f"bin_{b_id}").replace(" ", "_").lower()
-            label_png = generate_printable_bin_label(b, base_url=base_url)
+            label_png = generate_printable_bin_label(b, frontend_url=effective_url)
             filename = f"greenroute_bin_label_{b_id:03d}_{b_name}.png"
             zf.writestr(filename, label_png)
             
             # Also include raw QR matrix
-            qr_img = generate_bin_qr_code(b_id, b.get("tenant_id", "sou"), base_url)
+            qr_img = generate_bin_qr_code(b_id, b.get("tenant_id", "sou"), frontend_url=effective_url)
             qr_buf = io.BytesIO()
             qr_img.save(qr_buf, format="PNG")
             zf.writestr(f"qr_codes/qr_matrix_{b_id:03d}.png", qr_buf.getvalue())

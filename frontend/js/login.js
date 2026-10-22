@@ -91,6 +91,9 @@ function bindForms() {
     const adminRegForm = document.getElementById('admin-register-form');
     const loginForm = document.getElementById('login-form');
 
+    // Purge any legacy stored plaintext passwords
+    localStorage.removeItem('registered_password');
+
     // Citizen Registration
     if (citizenRegForm) {
         citizenRegForm.addEventListener('submit', async (e) => {
@@ -100,6 +103,10 @@ function bindForms() {
             const password = document.getElementById('cit-password').value;
 
             // Attempt backend registration
+            let backendSuccess = false;
+            let backendError = null;
+            let userData = null;
+
             try {
                 const res = await fetch('http://127.0.0.1:8000/users/register', {
                     method: 'POST',
@@ -107,34 +114,47 @@ function bindForms() {
                     body: JSON.stringify({ name, email, password, role: 'citizen' })
                 });
                 if (res.ok) {
-                    const u = await res.json();
-                    localStorage.setItem('user_id', u.id);
-                    if (u.access_token) {
-                        localStorage.setItem('access_token', u.access_token);
-                    }
+                    userData = await res.json();
+                    backendSuccess = true;
+                } else {
+                    const errJson = await res.json().catch(() => ({}));
+                    backendError = errJson.detail || `Registration failed with HTTP ${res.status}`;
                 }
             } catch (err) {
-                console.warn("Backend registration skipped/offline, persisting locally.", err);
+                console.warn("Backend registration offline:", err);
             }
 
-            localStorage.setItem('registered_name', name);
-            localStorage.setItem('registered_email', email);
-            localStorage.setItem('registered_password', password);
-            localStorage.setItem('registered_role', 'citizen');
-            localStorage.setItem('is_approved', 'true');
-            localStorage.setItem('is_authenticated', 'true');
-            localStorage.setItem('gr_points', '0');
-            localStorage.setItem('gr_streak', '0');
-            localStorage.setItem('gr_total_scans', '0');
-            localStorage.setItem('gr_co2_kg', '0');
-            localStorage.setItem('gr_rank', 'Novice Sprout');
+            // If the server explicitly rejected the registration, do not show success
+            if (backendError) {
+                showAlert(backendError, 'error');
+                return;
+            }
 
-            showAlert(`Welcome, ${name}! Your Citizen account is active. Redirecting...`, 'success');
-            citizenRegForm.reset();
+            if (backendSuccess && userData) {
+                localStorage.setItem('user_id', userData.id);
+                if (userData.access_token) {
+                    localStorage.setItem('access_token', userData.access_token);
+                }
+                localStorage.setItem('registered_name', userData.name);
+                localStorage.setItem('registered_email', userData.email);
+                localStorage.setItem('registered_role', userData.role);
+                localStorage.setItem('is_approved', userData.is_approved ? 'true' : 'false');
+                localStorage.setItem('is_authenticated', 'true');
+                localStorage.setItem('gr_points', userData.points || 0);
+                localStorage.setItem('gr_streak', userData.streak || 0);
+                localStorage.setItem('gr_total_scans', userData.total_scans || 0);
+                localStorage.setItem('gr_co2_kg', '0');
+                localStorage.setItem('gr_rank', userData.rank || 'Novice Sprout');
 
-            setTimeout(() => {
-                window.location.href = 'citizen.html';
-            }, 1000);
+                showAlert(`Welcome, ${name}! Your Citizen account is active. Redirecting...`, 'success');
+                citizenRegForm.reset();
+
+                setTimeout(() => {
+                    window.location.href = 'citizen.html';
+                }, 1000);
+            } else {
+                showAlert('Server unreachable. Please check backend status.', 'error');
+            }
         });
     }
 
@@ -147,7 +167,10 @@ function bindForms() {
             const email = document.getElementById('adm-email').value.trim();
             const password = document.getElementById('adm-password').value;
 
-            // Attempt backend registration
+            let backendSuccess = false;
+            let backendError = null;
+            let userData = null;
+
             try {
                 const res = await fetch('http://127.0.0.1:8000/users/register', {
                     method: 'POST',
@@ -155,38 +178,36 @@ function bindForms() {
                     body: JSON.stringify({ name, email, password, role: 'admin', admin_id: adminId, department: 'Campus Facilities' })
                 });
                 if (res.ok) {
-                    const u = await res.json();
-                    localStorage.setItem('user_id', u.id);
+                    userData = await res.json();
+                    backendSuccess = true;
+                } else {
+                    const errJson = await res.json().catch(() => ({}));
+                    backendError = errJson.detail || `Registration failed with HTTP ${res.status}`;
                 }
             } catch (err) {
-                console.warn("Backend admin registration offline, persisting locally.", err);
+                console.warn("Backend admin registration offline:", err);
             }
 
-            localStorage.setItem('registered_name', name);
-            localStorage.setItem('admin_id', adminId);
-            localStorage.setItem('registered_email', email);
-            localStorage.setItem('registered_password', password);
-            localStorage.setItem('registered_role', 'admin');
-            localStorage.setItem('is_approved', 'false');
+            if (backendError) {
+                showAlert(backendError, 'error');
+                return;
+            }
 
-            // Add to approvals queue in data service
-            const approvals = GreenRouteData.getPendingApprovals();
-            const newRequest = {
-                id: Date.now(),
-                name: name,
-                emp_id: adminId,
-                email: email,
-                department: "Campus Facilities",
-                date: new Date().toISOString().split('T')[0],
-                isLocal: true
-            };
-            approvals.push(newRequest);
-            localStorage.setItem('gr_approvals', JSON.stringify(approvals));
+            if (backendSuccess && userData) {
+                localStorage.setItem('user_id', userData.id);
+                localStorage.setItem('registered_name', userData.name);
+                localStorage.setItem('admin_id', adminId);
+                localStorage.setItem('registered_email', userData.email);
+                localStorage.setItem('registered_role', 'admin');
+                localStorage.setItem('is_approved', 'false');
 
-            showAlert('Registration Submitted! Administrator accounts require authorization from the Head Authority. Once approved in the Approvals portal, you can sign in.', 'info');
+                showAlert('Registration Submitted! Administrator accounts require authorization from the Head Authority. Once approved, you can sign in.', 'info');
 
-            const inputs = adminRegForm.querySelectorAll('input, button');
-            inputs.forEach(input => input.disabled = true);
+                const inputs = adminRegForm.querySelectorAll('input, button');
+                inputs.forEach(input => input.disabled = true);
+            } else {
+                showAlert('Server unreachable. Please check backend connection.', 'error');
+            }
         });
     }
 
@@ -200,6 +221,7 @@ function bindForms() {
             // 1. Try Backend Authentication with Password & JWT verification
             let backendUser = null;
             let backendError = null;
+            let backendAttempted = false;
 
             try {
                 const res = await fetch('http://127.0.0.1:8000/users/login', {
@@ -207,6 +229,7 @@ function bindForms() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password, role: currentRole })
                 });
+                backendAttempted = true;
 
                 if (res.ok) {
                     backendUser = await res.json();
@@ -214,6 +237,9 @@ function bindForms() {
                     backendError = "Invalid credentials. Incorrect email or password.";
                 } else if (res.status === 403) {
                     backendError = "Access Denied: Your administrator account is still pending Head Authority approval.";
+                } else {
+                    const errJson = await res.json().catch(() => ({}));
+                    backendError = errJson.detail || `Login failed with HTTP ${res.status}`;
                 }
             } catch (err) {
                 console.warn("Backend login offline, falling back to local verification:", err);

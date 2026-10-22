@@ -4,12 +4,13 @@ Manages live streaming of IoT sensor fill rates, battery voltage, truck GPS upda
 and critical overflow broadcast alerts.
 """
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException, Depends, Query, status
+from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 import json
-import asyncio
-import random
 from datetime import datetime
+from ..auth_utils import decode_access_token, require_role
+from .. import models
 
 router = APIRouter(
     tags=["Real-Time IoT Telemetry"]
@@ -17,52 +18,86 @@ router = APIRouter(
 
 class ConnectionManager:
     def __init__(self):
-        self.active_connections: List[WebSocket] = []
+        # Map tenant_id -> list of active WebSockets
+        self.tenant_connections: Dict[str, List[WebSocket]] = {}
+        self.global_connections: List[WebSocket] = []
 
-    async def connect(self, websocket: WebSocket):
+    async def connect(self, websocket: WebSocket, tenant_id: str, is_head_admin: bool = False):
         await websocket.accept()
-        self.active_connections.append(websocket)
+        if is_head_admin:
+            self.global_connections.append(websocket)
+        else:
+            if tenant_id not in self.tenant_connections:
+                self.tenant_connections[tenant_id] = []
+            self.tenant_connections[tenant_id].append(websocket)
 
-    def disconnect(self, websocket: WebSocket):
-        if websocket in self.active_connections:
-            self.active_connections.remove(websocket)
+    def disconnect(self, websocket: WebSocket, tenant_id: str):
+        if websocket in self.global_connections:
+            self.global_connections.remove(websocket)
+        if tenant_id in self.tenant_connections and websocket in self.tenant_connections[tenant_id]:
+            self.tenant_connections[tenant_id].remove(websocket)
 
-    async def broadcast(self, data: Dict[str, Any]):
+    async def broadcast_to_tenant(self, tenant_id: str, data: Dict[str, Any]) -> int:
+        """Broadcasts event strictly to subscribers within tenant boundary and authorized head admins."""
         message = json.dumps(data)
+        recipients = list(self.tenant_connections.get(tenant_id, [])) + list(self.global_connections)
         dead_connections = []
-        for connection in self.active_connections:
+        sent_count = 0
+        for connection in recipients:
             try:
                 await connection.send_text(message)
+                sent_count += 1
             except Exception:
                 dead_connections.append(connection)
+
         for dead in dead_connections:
-            self.disconnect(dead)
+            self.disconnect(dead, tenant_id)
+        return sent_count
+
+    def get_tenant_active_count(self, tenant_id: str) -> int:
+        return len(self.tenant_connections.get(tenant_id, [])) + len(self.global_connections)
 
 manager = ConnectionManager()
 
 @router.websocket("/ws/telemetry")
-async def websocket_telemetry_endpoint(websocket: WebSocket):
+async def websocket_telemetry_endpoint(
+    websocket: WebSocket,
+    token: Optional[str] = Query(None, description="Bearer JWT token for subscriber authentication")
+):
     """
-    Bidirectional WebSocket connection for live smart bin IoT sensor readings,
-    battery voltages, collection vehicle GPS coordinates, and real-time overflow alerts.
+    Authenticated WebSocket connection for live smart bin IoT sensor readings,
+    battery voltages, and real-time overflow alerts. Isolated strictly by tenant.
     """
-    await manager.connect(websocket)
+    # Authenticate subscriber
+    if not token:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Authentication token required")
+        return
+
+    payload = decode_access_token(token)
+    if not payload:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Invalid or expired token")
+        return
+
+    user_tenant = payload.get("tenant_id", "sou")
+    user_role = payload.get("role", "citizen")
+    is_head_admin = (user_role == "head_admin")
+
+    await manager.connect(websocket, tenant_id=user_tenant, is_head_admin=is_head_admin)
     try:
         # Send initial handshake packet
         await websocket.send_text(json.dumps({
             "type": "CONNECTION_ESTABLISHED",
             "timestamp": datetime.now().isoformat(),
             "status": "online",
-            "active_clients": len(manager.active_connections),
-            "message": "Connected to GreenRoute Real-Time IoT Telemetry Hub"
+            "tenant_id": user_tenant,
+            "active_clients": manager.get_tenant_active_count(user_tenant),
+            "message": f"Connected to GreenRoute IoT Telemetry Hub (Tenant: {user_tenant})"
         }))
 
-        # Keep listening for pings or client triggers
         while True:
             data = await websocket.receive_text()
             try:
                 msg = json.loads(data)
-                # Handle client ping
                 if msg.get("action") == "ping":
                     await websocket.send_text(json.dumps({
                         "type": "PONG",
@@ -71,37 +106,63 @@ async def websocket_telemetry_endpoint(websocket: WebSocket):
             except Exception:
                 pass
     except WebSocketDisconnect:
-        manager.disconnect(websocket)
+        manager.disconnect(websocket, user_tenant)
     except Exception:
-        manager.disconnect(websocket)
+        manager.disconnect(websocket, user_tenant)
 
-from pydantic import BaseModel
+# --- PYDANTIC VALIDATION SCHEMAS ---
+ALLOWED_EVENT_TYPES = {"SENSOR_UPDATE", "TRUCK_LOCATION", "BIN_ALERT", "CRITICAL_OVERFLOW", "COLLECTION_COMPLETED"}
+
+class TelemetryPayload(BaseModel):
+    bin_id: int
+    tenant_id: str
+    fill_level: int = Field(..., ge=0, le=100)
+    battery_voltage: Optional[float] = 3.9
+    signal_rssi: Optional[int] = -65
+    status: Optional[str] = "NORMAL"
 
 class TelemetryBroadcastRequest(BaseModel):
-    event_type: Optional[str] = "SENSOR_UPDATE"
-    payload: Optional[Dict[str, Any]] = None
+    event_type: str = "SENSOR_UPDATE"
+    payload: TelemetryPayload
 
 @router.post("/telemetry/broadcast")
-async def trigger_telemetry_broadcast(req: Optional[TelemetryBroadcastRequest] = None):
+async def trigger_telemetry_broadcast(
+    req: TelemetryBroadcastRequest,
+    current_user: models.User = Depends(require_role(["admin", "head_admin", "driver"]))
+):
     """
-    REST endpoint to broadcast simulated or real IoT telemetry events to all
-    connected WebSocket clients (Admins, Drivers, and Dispatchers).
+    REST endpoint to broadcast verified IoT telemetry events.
+    Enforces publisher authentication, schema validation, and tenant isolation.
     """
-    event_type = req.event_type if req and req.event_type else "SENSOR_UPDATE"
-    payload = req.payload if req and req.payload else {
-        "bin_id": 1,
-        "tenant_id": "sou",
-        "fill_level": 94,
-        "battery_voltage": 3.92,
-        "signal_rssi": -68,
-        "status": "CRITICAL_OVERFLOW"
-    }
+    if req.event_type not in ALLOWED_EVENT_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid event_type '{req.event_type}'. Allowed types: {list(ALLOWED_EVENT_TYPES)}"
+        )
+
+    # Enforce tenant isolation for publishers: only head_admin can broadcast across tenants
+    if current_user.role != "head_admin" and current_user.tenant_id != req.payload.tenant_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Tenant boundary violation: Cannot broadcast telemetry for tenant '{req.payload.tenant_id}'."
+        )
 
     packet = {
-        "type": event_type,
+        "type": req.event_type,
         "timestamp": datetime.now().isoformat(),
-        "payload": payload
+        "payload": req.payload.model_dump(),
+        "publisher": {
+            "id": current_user.id,
+            "role": current_user.role
+        }
     }
-    await manager.broadcast(packet)
-    return {"status": "broadcast_sent", "active_clients": len(manager.active_connections), "packet": packet}
+
+    active_recipients = await manager.broadcast_to_tenant(req.payload.tenant_id, packet)
+
+    return {
+        "status": "broadcast_sent",
+        "tenant_id": req.payload.tenant_id,
+        "active_clients": active_recipients,
+        "packet": packet
+    }
 

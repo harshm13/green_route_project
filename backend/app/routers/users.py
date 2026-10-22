@@ -83,8 +83,20 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
             detail="An account with this email already exists."
         )
 
-    is_admin = user_data.role in ["admin", "head_admin"]
-    is_approved = not (user_data.role == "admin") # Admins require Head Admin approval
+    requested_role = (user_data.role or "citizen").strip().lower()
+    if requested_role == "head_admin":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Registration as 'head_admin' is not permitted. Privileged accounts must be provisioned through a trusted administrative process."
+        )
+    if requested_role not in ["citizen", "admin"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid registration role '{requested_role}'. Allowed roles are 'citizen' and 'admin'."
+        )
+
+    is_admin = requested_role == "admin"
+    is_approved = not is_admin # Admins require Head Admin approval; Citizens are approved
 
     # Cryptographically hash the password
     hashed_pwd = hash_password(user_data.password or "password123")
@@ -93,7 +105,8 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
         name=user_data.name.strip(),
         email=email_clean,
         hashed_password=hashed_pwd,
-        role=user_data.role or "citizen",
+        role=requested_role,
+        tenant_id=user_data.tenant_id or "sou",
         is_approved=is_approved,
         admin_id=user_data.admin_id,
         department=user_data.department or ("Campus Facilities" if is_admin else None),
@@ -107,8 +120,9 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
     db.flush()
 
     # If new admin, queue into AdminApproval table
-    if user_data.role == "admin":
+    if is_admin:
         approval = models.AdminApproval(
+            tenant_id=db_user.tenant_id,
             name=db_user.name,
             emp_id=db_user.admin_id or f"ADM-{db_user.id}",
             email=db_user.email,
@@ -124,11 +138,13 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
     token = create_access_token({
         "sub": str(db_user.id),
         "email": db_user.email,
-        "role": db_user.role
+        "role": db_user.role,
+        "tenant_id": db_user.tenant_id
     })
 
     return UserLoginResponse(
         id=db_user.id,
+        tenant_id=db_user.tenant_id,
         name=db_user.name,
         email=db_user.email,
         role=db_user.role,
@@ -171,7 +187,8 @@ def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
     token = create_access_token({
         "sub": str(user.id),
         "email": user.email,
-        "role": user.role
+        "role": user.role,
+        "tenant_id": user.tenant_id
     })
 
     return UserLoginResponse(
@@ -220,22 +237,58 @@ def haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     c = 2.0 * math.atan2(math.sqrt(a), math.sqrt(1.0 - a))
     return round(R * c, 1)
 
-# 6. Gamified QR Code scan to earn points and update streaks (with optional Geofence)
+# 6. Gamified QR Code scan to earn points and update streaks (with JWT identity, Tenant isolation & Replay protection)
 @router.post("/{user_id}/scan", response_model=ScanResult)
 def scan_bin(
     user_id: int,
     waste_type: str = Query("general", description="Material type: plastic, e-waste, organic, general"),
     bin_id: Optional[int] = Query(None, description="Smart bin ID scanned"),
+    qr_token: Optional[str] = Query(None, description="Server-authenticated QR token"),
+    scan_nonce: Optional[str] = Query(None, description="Transaction replay protection nonce"),
     user_lat: Optional[float] = Query(None, description="Citizen GPS latitude"),
     user_lng: Optional[float] = Query(None, description="Citizen GPS longitude"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_auth)
 ):
-    user = db.query(models.User).filter(models.User.id == user_id).first()
+    import uuid
+    # Derive user identity from JWT
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: Cannot record a scan for another user. Identity is derived strictly from your authenticated session."
+        )
+
+    user = db.query(models.User).filter(models.User.id == current_user.id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    previous_points = user.points
-    base_points = 50
+    # Tenant check & QR validation if bin_id provided
+    target_bin = None
+    if bin_id is not None:
+        target_bin = db.query(models.Bin).filter(models.Bin.id == bin_id).first()
+        if not target_bin:
+            raise HTTPException(status_code=404, detail="Target smart bin not found")
+        if target_bin.tenant_id != user.tenant_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Tenant boundary violation: Bin #{bin_id} belongs to '{target_bin.tenant_id}', but user belongs to '{user.tenant_id}'."
+            )
+        if qr_token:
+            from ..qr_service import verify_bin_qr_token
+            if not verify_bin_qr_token(bin_id=target_bin.id, tenant_id=target_bin.tenant_id, token=qr_token):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid or counterfeit QR token. QR identity validation failed."
+                )
+
+    # Transactional replay protection
+    nonce = scan_nonce or str(uuid.uuid4())
+    existing_scan = db.query(models.ScanRecord).filter(models.ScanRecord.nonce == nonce).first()
+    if existing_scan:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Transaction replay rejected: This scan nonce has already been processed."
+        )
 
     # Geofence anti-fraud verification
     geofence_bonus = 0
@@ -243,18 +296,24 @@ def scan_bin(
     geofence_status = "UNVERIFIED"
     distance_meters = None
 
-    if bin_id is not None and user_lat is not None and user_lng is not None:
-        target_bin = db.query(models.Bin).filter(models.Bin.id == bin_id).first()
-        if target_bin:
-            distance_meters = haversine_m(user_lat, user_lng, target_bin.latitude, target_bin.longitude)
-            if distance_meters <= 50.0:
-                geofence_verified = True
-                geofence_status = "VERIFIED_ON_SITE"
-                geofence_bonus = 15
-            elif distance_meters > 200.0:
-                geofence_status = "SPOOF_FLAGGED"
-            else:
-                geofence_status = "PROXIMITY_NORMAL"
+    if target_bin and user_lat is not None and user_lng is not None:
+        distance_meters = haversine_m(user_lat, user_lng, target_bin.latitude, target_bin.longitude)
+        if distance_meters <= 50.0:
+            geofence_verified = True
+            geofence_status = "VERIFIED_ON_SITE"
+            geofence_bonus = 15
+        elif distance_meters > 200.0:
+            geofence_status = "SPOOF_FLAGGED"
+            # Explicitly reject spoofed requests with 400
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Scan rejected: Distance spoofing detected ({distance_meters}m away from bin). Physical presence required."
+            )
+        else:
+            geofence_status = "PROXIMITY_NORMAL"
+
+    previous_points = user.points
+    base_points = 50
 
     # Calculate streak logic
     last_scan_dt = None
@@ -267,13 +326,26 @@ def scan_bin(
     new_streak = services.update_streak(last_scan_dt, user.streak)
     user.streak = new_streak
 
-    # Points calculation with multipliers from services.py + geofence bonus
     earned_points = services.calculate_earned_points(base_points=base_points, current_streak=new_streak, waste_type=waste_type) + geofence_bonus
     
     user.points += earned_points
     user.total_scans = (user.total_scans or 0) + 1
     user.last_scan_date = datetime.now().strftime("%Y-%m-%d")
     user.rank = services.calculate_rank(user.points)
+
+    # Persist immutable ScanRecord for replay protection and measured ESG audit
+    scan_entry = models.ScanRecord(
+        user_id=user.id,
+        bin_id=target_bin.id if target_bin else 0,
+        tenant_id=user.tenant_id,
+        waste_type=waste_type,
+        points_awarded=earned_points,
+        qr_token=qr_token,
+        nonce=nonce,
+        geofence_status=geofence_status,
+        timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    )
+    db.add(scan_entry)
 
     db.commit()
     db.refresh(user)

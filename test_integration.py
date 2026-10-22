@@ -1,6 +1,10 @@
+import sys
 import urllib.request
 import urllib.error
 import json
+
+if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 BASE_URL = "http://127.0.0.1:8000"
 
@@ -161,7 +165,7 @@ def test_api():
     req = urllib.request.Request(
         f"{BASE_URL}/users/1/scan?waste_type=e-waste&bin_id=1",
         data=b"",
-        headers={"Content-Type": "application/json"}
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {citizen_token}"}
     )
     with urllib.request.urlopen(req) as res:
         scan_res = json.loads(res.read().decode())
@@ -230,7 +234,7 @@ def test_api():
             "bin_id": 1,
             "waste_type": "metal"
         }).encode("utf-8"),
-        headers={"Content-Type": "application/json"}
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {citizen_token}"}
     )
     with urllib.request.urlopen(req) as res:
         verified_scan = json.loads(res.read().decode())
@@ -350,7 +354,7 @@ def test_api():
             "user_lat": 23.08412,
             "user_lng": 72.54481
         }).encode("utf-8"),
-        headers={"Content-Type": "application/json"}
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {citizen_token}"}
     )
     with urllib.request.urlopen(req_verified) as res:
         geo_res = json.loads(res.read().decode())
@@ -359,7 +363,7 @@ def test_api():
         assert geo_res["geofence"]["verified"] == True
         assert geo_res["geofence"]["bonus_points"] == 15
 
-    # Subtest B: Distance spoofing detected (> 200m away, e.g. 15 km away)
+    # Subtest B: Distance spoofing detected (> 200m away, e.g. 15 km away) -> Strict 400 Rejection
     req_spoof = urllib.request.Request(
         f"{BASE_URL}/ai/verify-and-scan",
         data=json.dumps({
@@ -369,17 +373,17 @@ def test_api():
             "user_lat": 23.0000,
             "user_lng": 72.4000
         }).encode("utf-8"),
-        headers={"Content-Type": "application/json"}
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {citizen_token}"}
     )
-    with urllib.request.urlopen(req_spoof) as res:
-        spoof_res = json.loads(res.read().decode())
-        print(f"Spoofed Geofence Status: {spoof_res['geofence']['status']} (Dist: {spoof_res['geofence']['distance_meters']}m)")
-        assert spoof_res["geofence"]["status"] == "SPOOF_FLAGGED"
-        assert spoof_res["geofence"]["verified"] == False
-        assert spoof_res["geofence"]["bonus_points"] == 0
+    try:
+        urllib.request.urlopen(req_spoof)
+        assert False, "Expected 400 Bad Request for spoofed distance scan, but request succeeded!"
+    except urllib.error.HTTPError as e:
+        print(f"Correctly caught distance spoofing rejection: HTTP {e.code} ({e.reason})")
+        assert e.code == 400
 
     # 23. Phase 4: Real-Time Telemetry Hub & Broadcast Event
-    print("\n--- 23. Testing Real-Time Telemetry Hub Broadcast ---")
+    print("\n--- 23. Testing Real-Time Telemetry Hub Broadcast with Role Authorization ---")
     req_telemetry = urllib.request.Request(
         f"{BASE_URL}/telemetry/broadcast",
         data=json.dumps({
@@ -393,7 +397,7 @@ def test_api():
                 "status": "CRITICAL_OVERFLOW"
             }
         }).encode("utf-8"),
-        headers={"Content-Type": "application/json"}
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {admin_token}"}
     )
     with urllib.request.urlopen(req_telemetry) as res:
         tel_res = json.loads(res.read().decode())
@@ -401,8 +405,155 @@ def test_api():
         assert tel_res["status"] == "broadcast_sent"
         assert tel_res["packet"]["payload"]["status"] == "CRITICAL_OVERFLOW"
 
+    # 24. Negative Security: Unauthenticated Scan Blocked (401)
+    print("\n--- 24. Testing Unauthenticated Scan Rejection (401 Unauthorized) ---")
+    req_unauth_scan = urllib.request.Request(
+        f"{BASE_URL}/users/1/scan?waste_type=plastic&bin_id=1",
+        data=b"",
+        headers={"Content-Type": "application/json"}
+    )
+    try:
+        urllib.request.urlopen(req_unauth_scan)
+        assert False, "Expected 401 Unauthorized on unauthenticated scan!"
+    except urllib.error.HTTPError as e:
+        print(f"Correctly blocked unauthenticated scan: HTTP {e.code}")
+        assert e.code == 401
+
+    # 25. Negative Security: Caller Cannot Claim Points for Another User ID (403)
+    print("\n--- 25. Testing Cross-User Point Claim Rejection (403 Forbidden) ---")
+    req_cross_scan = urllib.request.Request(
+        f"{BASE_URL}/users/2/scan?waste_type=plastic&bin_id=1",
+        data=b"",
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {citizen_token}"}
+    )
+    try:
+        urllib.request.urlopen(req_cross_scan)
+        assert False, "Expected 403 Forbidden when claiming points for another user!"
+    except urllib.error.HTTPError as e:
+        print(f"Correctly blocked cross-user point attribution: HTTP {e.code}")
+        assert e.code == 403
+
+    # 26. Negative Security: Public Registration as head_admin Rejected (400)
+    print("\n--- 26. Testing head_admin Registration Privilege Escalation Blocked (400) ---")
+    req_head_reg = urllib.request.Request(
+        f"{BASE_URL}/users/register",
+        data=json.dumps({
+            "name": "Attacker",
+            "email": "attacker@darkweb.io",
+            "password": "password123",
+            "role": "head_admin"
+        }).encode("utf-8"),
+        headers={"Content-Type": "application/json"}
+    )
+    try:
+        urllib.request.urlopen(req_head_reg)
+        assert False, "Expected 400 Bad Request when registering as head_admin!"
+    except urllib.error.HTTPError as e:
+        print(f"Correctly blocked public head_admin registration: HTTP {e.code}")
+        assert e.code == 400
+
+    # 27. Negative Security: Public Reseed Destruction Endpoint Removed (404/405)
+    print("\n--- 27. Testing Public Reseed Destruction Surface Removed ---")
+    req_seed = urllib.request.Request(
+        f"{BASE_URL}/bins/seed",
+        data=b"",
+        headers={"Content-Type": "application/json"}
+    )
+    try:
+        urllib.request.urlopen(req_seed)
+        assert False, "Expected 404/405 on removed /bins/seed endpoint!"
+    except urllib.error.HTTPError as e:
+        print(f"Correctly verified /bins/seed is unavailable: HTTP {e.code}")
+        assert e.code in [404, 405]
+
+    # 28. Negative Security: Deprecated Fallback JWT Secret Invalidation (401)
+    print("\n--- 28. Testing Tokens Signed With Deprecated Fallback Key Rejected ---")
+    import jwt
+    deprecated_token = jwt.encode(
+        {"sub": "1", "email": "kushal@sou.edu.in", "role": "citizen"},
+        "greenroute-super-secure-jwt-secret-key-2026-production",
+        algorithm="HS256"
+    )
+    req_dep_token = urllib.request.Request(
+        f"{BASE_URL}/users/me",
+        headers={"Authorization": f"Bearer {deprecated_token}"}
+    )
+    try:
+        urllib.request.urlopen(req_dep_token)
+        assert False, "Expected 401 Unauthorized for token signed with deprecated secret key!"
+    except urllib.error.HTTPError as e:
+        print(f"Correctly invalidated token signed with deprecated fallback key: HTTP {e.code}")
+        assert e.code == 401
+
+    # 29. Negative Security: Cross-Tenant Scan Blocked (403)
+    print("\n--- 29. Testing Cross-Tenant Scan Blocked (403 Forbidden) ---")
+    # Bin 10 belongs to tech_hub, while user 1 belongs to sou
+    req_cross_tenant = urllib.request.Request(
+        f"{BASE_URL}/ai/verify-and-scan",
+        data=json.dumps({
+            "user_id": 1,
+            "bin_id": 10,
+            "waste_type": "plastic"
+        }).encode("utf-8"),
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {citizen_token}"}
+    )
+    try:
+        urllib.request.urlopen(req_cross_tenant)
+        assert False, "Expected 403 Forbidden on cross-tenant scan!"
+    except urllib.error.HTTPError as e:
+        print(f"Correctly blocked cross-tenant scan: HTTP {e.code}")
+        assert e.code == 403
+
+    # 30. Negative Security: CVRP Truck Overload Protection (400)
+    print("\n--- 30. Testing CVRP Truck Capacity Overload Protection (400 Bad Request) ---")
+    try:
+        urllib.request.urlopen(f"{BASE_URL}/route/optimized?tenant_id=sou&filter_mode=all&truck_capacity=50")
+        assert False, "Expected 400 Bad Request when truck capacity is exceeded!"
+    except urllib.error.HTTPError as e:
+        print(f"Correctly rejected truck capacity overload: HTTP {e.code}")
+        assert e.code == 400
+
+    # 31. Contract Verification: Route Response Standardized Contract
+    print("\n--- 31. Testing Route Optimization Response Contract Standardization ---")
+    with urllib.request.urlopen(f"{BASE_URL}/route/optimized?tenant_id=sou&filter_mode=priority&truck_capacity=1500") as res:
+        route_std = json.loads(res.read().decode())
+        print(f"Validated route contract with {len(route_std['stops'])} stops")
+        assert len(route_std["stops"]) > 0
+        first_stop = route_std["stops"][0]
+        assert "step" in first_stop
+        assert "distanceFromPrevKm" in first_stop
+        assert "bin" in first_stop
+        assert "name" in first_stop["bin"]
+        assert "latitude" in first_stop["bin"]
+        assert "longitude" in first_stop["bin"]
+        print("  Stop #1 Contract validated:", f"Step {first_stop['step']}, Bin: {first_stop['bin']['name']}, Prev Dist: {first_stop['distanceFromPrevKm']} km")
+
+    # 32. Negative Security: Ordinary Admin Forbidden from Approving Admins (403)
+    print("\n--- 32. Testing Ordinary Admin Forbidden from Head Admin Approvals (403) ---")
+    req_admin_login = urllib.request.Request(
+        f"{BASE_URL}/users/login",
+        data=json.dumps({"email": "facilities.lead@sou.edu.in", "password": "password123"}).encode("utf-8"),
+        headers={"Content-Type": "application/json"}
+    )
+    with urllib.request.urlopen(req_admin_login) as res:
+        ord_admin = json.loads(res.read().decode())
+        ord_admin_token = ord_admin["access_token"]
+        assert ord_admin["role"] == "admin"
+
+    req_ord_approve = urllib.request.Request(
+        f"{BASE_URL}/admin/approvals/{approval_id}/approve",
+        data=b"",
+        headers={"Authorization": f"Bearer {ord_admin_token}"}
+    )
+    try:
+        urllib.request.urlopen(req_ord_approve)
+        assert False, "Expected 403 Forbidden when ordinary admin attempts approval!"
+    except urllib.error.HTTPError as e:
+        print(f"Correctly blocked ordinary admin from approving: HTTP {e.code}")
+        assert e.code == 403
+
     print("\n==================================================")
-    print("🚀 ALL 23 INTEGRATION, AI, ESG & TELEMETRY TESTS PASSED! 🎉")
+    print("🚀 ALL 32 INTEGRATION, SECURITY, AI, ESG & TELEMETRY TESTS PASSED! 🎉")
     print("==================================================")
 
 if __name__ == "__main__":

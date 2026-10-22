@@ -83,3 +83,18 @@ class AuditLog(Base):
     department = Column(String, default="Campus Facilities")
     action = Column(String, nullable=False) # 'APPROVED' | 'REJECTED'
     timestamp = Column(String, nullable=False)
+
+class ScanRecord(Base):
+    __tablename__ = "scan_records"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, index=True, nullable=False)
+    bin_id = Column(Integer, index=True, nullable=False)
+    tenant_id = Column(String, default="sou", index=True, nullable=False)
+    waste_type = Column(String, default="general")
+    points_awarded = Column(Integer, default=0)
+    qr_token = Column(String, nullable=True)
+    nonce = Column(String, unique=True, index=True, nullable=False)
+    geofence_status = Column(String, default="UNVERIFIED")
+    timestamp = Column(String, nullable=False)
+

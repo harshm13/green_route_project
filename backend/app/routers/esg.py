@@ -158,11 +158,27 @@ def get_esg_report(
     gross_savings_usd = round(gross_savings_inr * inr_to_usd, 2)
     net_savings_usd = round(net_savings_inr * inr_to_usd, 2)
 
+    # Query actual measured scan logs for this tenant from database
+    measured_scans = db.query(models.ScanRecord).filter(models.ScanRecord.tenant_id == tenant_id).all()
+    measured_scans_count = len(measured_scans)
+    measured_diversion_kg = round(measured_scans_count * 0.25, 2)
+    measured_co2e_avoided_kg = round(measured_diversion_kg * 1.85, 2)
+
     return {
         "status": "success",
-        "standard": "GHG Protocol Corporate Standard (ISO 14064-1 Compliant)",
+        "standard": "GHG Protocol Corporate Standard (Estimated Projections - Unverified)",
         "audit_id": f"ESG-{tenant.id.upper()}-{2026 if timeframe == 'annual' else '2026-09'}",
         "timeframe": timeframe,
+        "verification_status": "UNVERIFIED_ESTIMATE (Calculated from baseline fleet assumptions and bin capacities; pending certified meter audit)",
+        "accounting_basis": {
+            "mode": "Heuristic Model & Fleet Projections",
+            "audit_certified": False,
+            "measured_records": {
+                "verified_scans_logged": measured_scans_count,
+                "measured_material_diverted_kg": measured_diversion_kg,
+                "measured_emissions_avoided_kg_co2e": measured_co2e_avoided_kg
+            }
+        },
         "tenant": {
             "id": tenant.id,
             "name": tenant.name,

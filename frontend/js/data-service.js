@@ -273,43 +273,67 @@ const GreenRouteData = (function () {
     async function toggleBinStatus(binId, forceStatus) {
         const bins = await getBins();
         const bin = bins.find(b => b.id === Number(binId));
-        if (bin) {
-            bin.is_full = forceStatus !== undefined ? forceStatus : !bin.is_full;
-            bin.fill_level = bin.is_full ? Math.max(85, bin.fill_level) : Math.min(15, bin.fill_level);
-            bin.last_emptied = bin.is_full ? bin.last_emptied : new Date().toISOString().replace('T', ' ').substring(0, 16);
-            saveBins(bins);
+        if (!bin) return null;
 
-            if (isLiveBackend) {
-                try {
-                    await fetch(`${API_BASE}/bins/${binId}/status?is_full=${bin.is_full}`, {
-                        method: 'PUT',
-                        headers: getAuthHeaders()
-                    });
-                } catch (e) {}
+        const nextStatus = forceStatus !== undefined ? forceStatus : !bin.is_full;
+
+        if (isLiveBackend) {
+            const res = await fetch(`${API_BASE}/bins/${binId}/status?is_full=${nextStatus}`, {
+                method: 'PUT',
+                headers: getAuthHeaders()
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                const msg = err.detail || `Server rejected status update (HTTP ${res.status})`;
+                if (window.alert) alert(`Update Rejected: ${msg}`);
+                throw new Error(msg);
             }
+            const updated = await res.json();
+            bin.is_full = updated.is_full;
+            bin.fill_level = updated.fill_level;
+            bin.last_emptied = updated.last_emptied;
+            saveBins(bins);
+            return bin;
         }
+
+        // Offline simulation mode
+        bin.is_full = nextStatus;
+        bin.fill_level = bin.is_full ? Math.max(85, bin.fill_level) : Math.min(15, bin.fill_level);
+        bin.last_emptied = bin.is_full ? bin.last_emptied : new Date().toISOString().replace('T', ' ').substring(0, 16);
+        saveBins(bins);
         return bin;
     }
 
     async function updateBinFillLevel(binId, newFillLevel) {
         const bins = await getBins();
         const bin = bins.find(b => b.id === Number(binId));
-        if (bin) {
-            bin.fill_level = Number(newFillLevel);
-            // Critical if >= 80% or priority zone >= 60%
-            const isPriorityCritical = bin.priority_zone && bin.fill_level >= 60;
-            bin.is_full = bin.fill_level >= 80 || isPriorityCritical;
-            saveBins(bins);
+        if (!bin) return null;
 
-            if (isLiveBackend) {
-                try {
-                    await fetch(`${API_BASE}/bins/${binId}/fill-level?fill_level=${bin.fill_level}`, {
-                        method: 'PUT',
-                        headers: getAuthHeaders()
-                    });
-                } catch (e) {}
+        const targetFill = Number(newFillLevel);
+
+        if (isLiveBackend) {
+            const res = await fetch(`${API_BASE}/bins/${binId}/fill-level?fill_level=${targetFill}`, {
+                method: 'PUT',
+                headers: getAuthHeaders()
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                const msg = err.detail || `Server rejected fill level update (HTTP ${res.status})`;
+                if (window.alert) alert(`Update Rejected: ${msg}`);
+                throw new Error(msg);
             }
+            const updated = await res.json();
+            bin.fill_level = updated.fill_level;
+            bin.is_full = updated.is_full;
+            saveBins(bins);
+            return bin;
         }
+
+        // Offline simulation mode
+        bin.fill_level = targetFill;
+        const isPriorityCritical = bin.priority_zone && bin.fill_level >= 60;
+        bin.is_full = bin.fill_level >= 80 || isPriorityCritical;
+        saveBins(bins);
         return bin;
     }
 
@@ -545,28 +569,33 @@ const GreenRouteData = (function () {
 
         // Try backend scan first if active
         if (isLiveBackend) {
-            try {
-                const userId = localStorage.getItem('user_id') || 1;
-                const scanUrl = `${API_BASE}/users/${userId}/scan?waste_type=${encodeURIComponent(wasteType)}${binId ? `&bin_id=${binId}` : ''}`;
-                const res = await fetch(scanUrl, { method: 'POST' });
-                if (res.ok) {
-                    const data = await res.json();
-                    earnedPoints = data.earned_points;
-                    multiplier = data.multiplier;
-                    newStreak = data.current_streak;
-                    citizen.points = data.new_total_points;
-                    citizen.streak = newStreak;
-                    if (data.user && data.user.total_scans !== undefined) {
-                        citizen.totalScans = data.user.total_scans;
-                    }
-                }
-            } catch (e) {
-                console.warn("Backend scan failed, computing locally:", e);
+            const userId = localStorage.getItem('user_id');
+            if (!userId) {
+                alert("Authentication required. Please sign in to scan bins.");
+                throw new Error("Authentication required");
             }
-        }
-
-        // Local calculation fallback
-        if (earnedPoints === 0) {
+            const scanUrl = `${API_BASE}/users/${userId}/scan?waste_type=${encodeURIComponent(wasteType)}${binId ? `&bin_id=${binId}` : ''}`;
+            const res = await fetch(scanUrl, {
+                method: 'POST',
+                headers: getAuthHeaders()
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                const msg = err.detail || `Scan rejected by server (HTTP ${res.status})`;
+                if (window.alert) alert(`Scan Rejected: ${msg}`);
+                throw new Error(msg);
+            }
+            const data = await res.json();
+            earnedPoints = data.earned_points;
+            multiplier = data.multiplier;
+            newStreak = data.current_streak;
+            citizen.points = data.new_total_points;
+            citizen.streak = newStreak;
+            if (data.user && data.user.total_scans !== undefined) {
+                citizen.totalScans = data.user.total_scans;
+            }
+        } else {
+            // Local calculation fallback for offline demo
             let basePoints = 50;
             if (citizen.streak >= 7) {
                 multiplier += 0.5;
@@ -730,6 +759,19 @@ const GreenRouteData = (function () {
     }
 
     async function approveAdmin(id) {
+        if (isLiveBackend) {
+            const res = await fetch(`${API_BASE}/admin/approvals/${id}/approve`, {
+                method: 'POST',
+                headers: getAuthHeaders()
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                const msg = err.detail || `Server rejected approval (HTTP ${res.status})`;
+                if (window.alert) alert(`Approval Failed: ${msg}`);
+                throw new Error(msg);
+            }
+        }
+
         const approvals = JSON.parse(localStorage.getItem('gr_approvals') || "[]");
         const auditLog = JSON.parse(localStorage.getItem('gr_audit_log') || "[]");
         const target = approvals.find(a => a.id === Number(id));
@@ -745,18 +787,8 @@ const GreenRouteData = (function () {
             });
             localStorage.setItem('gr_audit_log', JSON.stringify(auditLog));
 
-            // If it matches registered user in localStorage, grant access
             if (localStorage.getItem('registered_email') === target.email || target.isLocal) {
                 localStorage.setItem('is_approved', 'true');
-            }
-
-            if (isLiveBackend) {
-                try {
-                    await fetch(`${API_BASE}/admin/approvals/${id}/approve`, {
-                        method: 'POST',
-                        headers: getAuthHeaders()
-                    });
-                } catch (e) {}
             }
             return true;
         }
@@ -764,6 +796,19 @@ const GreenRouteData = (function () {
     }
 
     async function rejectAdmin(id) {
+        if (isLiveBackend) {
+            const res = await fetch(`${API_BASE}/admin/approvals/${id}/reject`, {
+                method: 'POST',
+                headers: getAuthHeaders()
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                const msg = err.detail || `Server rejected rejection (HTTP ${res.status})`;
+                if (window.alert) alert(`Rejection Failed: ${msg}`);
+                throw new Error(msg);
+            }
+        }
+
         const approvals = JSON.parse(localStorage.getItem('gr_approvals') || "[]");
         const auditLog = JSON.parse(localStorage.getItem('gr_audit_log') || "[]");
         const target = approvals.find(a => a.id === Number(id));
@@ -781,15 +826,6 @@ const GreenRouteData = (function () {
 
             if (localStorage.getItem('registered_email') === target.email || target.isLocal) {
                 localStorage.setItem('is_approved', 'rejected');
-            }
-
-            if (isLiveBackend) {
-                try {
-                    await fetch(`${API_BASE}/admin/approvals/${id}/reject`, {
-                        method: 'POST',
-                        headers: getAuthHeaders()
-                    });
-                } catch (e) {}
             }
             return true;
         }
@@ -861,28 +897,31 @@ const GreenRouteData = (function () {
         }
 
         if (isLiveBackend) {
-            try {
-                const res = await fetch(`${API_BASE}/ai/verify-and-scan`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: userId,
-                        bin_id: binId,
-                        image_data: imageData,
-                        waste_type: wasteType,
-                        user_lat: userLat,
-                        user_lng: userLng
-                    })
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    localStorage.setItem('gr_points', data.new_total_points);
-                    localStorage.setItem('gr_streak', data.new_streak || data.streak);
-                    return data;
-                }
-            } catch (e) {
-                console.warn("Backend verified scan failed, falling back to local engine:", e);
+            const res = await fetch(`${API_BASE}/ai/verify-and-scan`, {
+                method: 'POST',
+                headers: {
+                    ...getAuthHeaders(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    bin_id: binId,
+                    image_data: imageData,
+                    waste_type: wasteType,
+                    user_lat: userLat,
+                    user_lng: userLng
+                })
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                const msg = err.detail || `Vision scan rejected (HTTP ${res.status})`;
+                if (window.alert) alert(`Scan Verification Failed: ${msg}`);
+                throw new Error(msg);
             }
+            const data = await res.json();
+            localStorage.setItem('gr_points', data.new_total_points);
+            localStorage.setItem('gr_streak', data.new_streak || data.streak);
+            return data;
         }
         // Fallback to local scan
         const localScan = processCitizenScan(wasteType, binId);
@@ -1033,7 +1072,10 @@ const GreenRouteData = (function () {
         if (telemetrySocket && (telemetrySocket.readyState === WebSocket.OPEN || telemetrySocket.readyState === WebSocket.CONNECTING)) {
             return;
         }
-        const wsUrl = "ws://127.0.0.1:8000/ws/telemetry";
+        const token = getAuthToken();
+        const wsUrl = token
+            ? `ws://127.0.0.1:8000/ws/telemetry?token=${encodeURIComponent(token)}`
+            : "ws://127.0.0.1:8000/ws/telemetry";
         try {
             telemetrySocket = new WebSocket(wsUrl);
             telemetrySocket.onopen = () => {

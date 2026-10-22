@@ -22,6 +22,7 @@ yarn-error.log*
 # Environment
 .env
 .env.local
+.jwt_secret
 
 # Operating System
 .DS_Store

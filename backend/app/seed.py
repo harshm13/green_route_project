@@ -9,9 +9,13 @@ from .database import engine, SessionLocal, Base
 from . import models
 from .auth_utils import hash_password
 
-def seed_database():
-    # Recreate tables to ensure schema matches current models
-    Base.metadata.drop_all(bind=engine)
+def seed_database(reset: bool = False):
+    """
+    Seeds database non-destructively by default.
+    Only recreates tables if reset=True is explicitly passed via CLI.
+    """
+    if reset:
+        Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
 
     db = SessionLocal()
@@ -52,7 +56,10 @@ def seed_database():
                 esg_target_reduction_pct=45
             )
         ]
-        db.add_all(tenants)
+        for t in tenants:
+            existing = db.query(models.Tenant).filter(models.Tenant.id == t.id).first()
+            if not existing:
+                db.add(t)
         db.commit()
 
         # 2. Smart Campus Bins (Organized by Tenant)
@@ -323,7 +330,10 @@ def seed_database():
                 last_emptied="2026-09-14 08:00"
             )
         ]
-        db.add_all(bins)
+        for b in bins:
+            existing = db.query(models.Bin).filter(models.Bin.id == b.id).first()
+            if not existing:
+                db.add(b)
         db.commit()
 
         # 3. Seed Users across Campuses with Bcrypt Hashed Passwords
@@ -511,7 +521,10 @@ def seed_database():
                 last_scan_date="2026-09-14"
             )
         ]
-        db.add_all(users)
+        for u in users:
+            existing = db.query(models.User).filter(models.User.email == u.email).first()
+            if not existing:
+                db.add(u)
         db.commit()
 
         # 4. Audit Log Entries
@@ -553,7 +566,14 @@ def seed_database():
                 timestamp="2026-09-13 09:45:00"
             )
         ]
-        db.add_all(audit_entries)
+        for a in audit_entries:
+            existing = db.query(models.AuditLog).filter(
+                models.AuditLog.email == a.email,
+                models.AuditLog.action == a.action,
+                models.AuditLog.timestamp == a.timestamp
+            ).first()
+            if not existing:
+                db.add(a)
         db.commit()
 
         print("Successfully seeded multi-tenant GreenRoute database with 3 campuses, 20 smart bins, and demo accounts!")
@@ -566,4 +586,8 @@ def seed_database():
         db.close()
 
 if __name__ == "__main__":
-    seed_database()
+    import sys
+    is_reset = "--reset" in sys.argv
+    if is_reset:
+        print("Explicit --reset flag supplied: Recreating database tables...")
+    seed_database(reset=is_reset)

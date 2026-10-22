@@ -16,6 +16,9 @@ from ..database import SessionLocal
 from ..vision_service import classify_waste, get_recommended_bin_for_category
 from ..services import calculate_earned_points, calculate_rank, update_streak
 
+from ..auth_utils import require_auth
+import uuid
+
 router = APIRouter(
     prefix="/ai",
     tags=["Defensible AI & Vision Moat"]
@@ -47,10 +50,12 @@ class ClassifyWasteRequest(BaseModel):
     image_data: Optional[str] = None # Base64 or data URL
 
 class VerifyAndScanRequest(BaseModel):
-    user_id: int
+    user_id: Optional[int] = None
     bin_id: int
     image_data: Optional[str] = None
     waste_type: Optional[str] = "plastic"
+    qr_token: Optional[str] = None
+    nonce: Optional[str] = None
     user_lat: Optional[float] = None
     user_lng: Optional[float] = None
 
@@ -71,22 +76,48 @@ def classify_waste_endpoint(req: ClassifyWasteRequest):
 
 # 2. Vision-Verified Atomic Citizen Scan & Points Credit with Anti-Fraud Geofence
 @router.post("/verify-and-scan")
-def verify_and_scan_endpoint(req: VerifyAndScanRequest, db: Session = Depends(get_db)):
+def verify_and_scan_endpoint(
+    req: VerifyAndScanRequest,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_auth)
+):
     """
     Atomically verifies waste via Computer Vision, validates physical proximity
-    against bin coordinates (+-50m geofence), and credits user points.
+    against bin coordinates (+-50m geofence), derives identity from JWT token,
+    enforces tenant boundaries, provides replay protection, and credits user points.
     """
-    user = db.query(models.User).filter(models.User.id == req.user_id).first()
+    # Derive identity from authenticated JWT
+    if req.user_id is not None and req.user_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden: Cannot credit scan to another user ID. Identity derived from session."
+        )
+    user = db.query(models.User).filter(models.User.id == current_user.id).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User account not found")
+        raise HTTPException(status_code=404, detail="User not found")
 
     bin_obj = db.query(models.Bin).filter(models.Bin.id == req.bin_id).first()
     if not bin_obj:
         raise HTTPException(status_code=404, detail="Target smart bin not found")
 
-    # Run computer vision classification
-    classification = classify_waste(image_data=req.image_data, sample_name=req.waste_type)
-    detected_type = classification.get("waste_type", req.waste_type or "general")
+    # Enforce tenant boundary
+    if bin_obj.tenant_id != user.tenant_id:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Tenant boundary violation: Bin #{bin_obj.id} belongs to '{bin_obj.tenant_id}', but user belongs to '{user.tenant_id}'."
+        )
+
+    # Validate QR token if provided
+    if req.qr_token:
+        from ..qr_service import verify_bin_qr_token
+        if not verify_bin_qr_token(bin_id=bin_obj.id, tenant_id=bin_obj.tenant_id, token=req.qr_token):
+            raise HTTPException(status_code=400, detail="Invalid QR code identity token for this bin.")
+
+    # Transactional replay protection
+    scan_nonce = req.nonce or str(uuid.uuid4())
+    existing_scan = db.query(models.ScanRecord).filter(models.ScanRecord.nonce == scan_nonce).first()
+    if existing_scan:
+        raise HTTPException(status_code=400, detail="Transaction replay rejected: This scan has already been processed.")
 
     # Geofence Anti-Fraud Proximity Check
     geofence_verified = False
@@ -102,8 +133,17 @@ def verify_and_scan_endpoint(req: VerifyAndScanRequest, db: Session = Depends(ge
             geofence_bonus = 15 # +15 Green Points bonus for physically verified scans!
         elif distance_meters > 200.0:
             geofence_status = "SPOOF_FLAGGED"
+            # Explicitly reject spoofed scans with 400
+            raise HTTPException(
+                status_code=400,
+                detail=f"Scan rejected: Distance spoofing detected ({distance_meters}m from bin). Physical presence required."
+            )
         else:
             geofence_status = "PROXIMITY_NORMAL"
+
+    # Run computer vision classification
+    classification = classify_waste(image_data=req.image_data, sample_name=req.waste_type)
+    detected_type = classification.get("waste_type", req.waste_type or "general")
 
     # Update user streak
     last_scan_dt = None
@@ -123,6 +163,20 @@ def verify_and_scan_endpoint(req: VerifyAndScanRequest, db: Session = Depends(ge
     user.total_scans = (user.total_scans or 0) + 1
     user.last_scan_date = datetime.now().strftime("%Y-%m-%d")
     user.rank = calculate_rank(user.points)
+
+    # Persist immutable ScanRecord for replay protection and measured ESG audit
+    scan_entry = models.ScanRecord(
+        user_id=user.id,
+        bin_id=bin_obj.id,
+        tenant_id=user.tenant_id,
+        waste_type=detected_type,
+        points_awarded=earned_points,
+        qr_token=req.qr_token,
+        nonce=scan_nonce,
+        geofence_status=geofence_status,
+        timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    )
+    db.add(scan_entry)
 
     db.commit()
     db.refresh(user)

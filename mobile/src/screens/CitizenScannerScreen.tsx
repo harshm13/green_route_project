@@ -17,11 +17,13 @@ import { isWithinGeofence } from "../services/geofence";
 
 interface CitizenScannerProps {
   userId?: number;
+  currentUser?: any;
   onDepositSuccess?: (earnedPoints: number) => void;
 }
 
 export const CitizenScannerScreen: React.FC<CitizenScannerProps> = ({
-  userId = 1,
+  userId,
+  currentUser,
   onDepositSuccess,
 }) => {
   const [permission, requestPermission] = useCameraPermissions();
@@ -90,12 +92,13 @@ export const CitizenScannerScreen: React.FC<CitizenScannerProps> = ({
     if (!lockedBinId) return;
     setIsSubmitting(true);
     try {
+      const activeUserId = userId || currentUser?.id;
       const res = await submitQrDeposit(
-        userId,
         lockedBinId,
         selectedMaterial,
         userLocation?.latitude,
-        userLocation?.longitude
+        userLocation?.longitude,
+        activeUserId
       );
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

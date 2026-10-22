@@ -249,6 +249,9 @@ def classify_waste_image(
         "waste_type": detected_type,
         "item_name": kb["item_name"],
         "confidence": confidence,
+        "is_heuristic_estimate": True,
+        "confidence_assessment": "Estimated based on color profile heuristics",
+        "verification_status": "UNVERIFIED_ESTIMATE",
         "material_grade": kb["material_grade"],
         "recommended_bin": kb["recommended_bin"],
         "bin_color": kb["bin_color"],
@@ -260,7 +263,7 @@ def classify_waste_image(
         "contamination_detected": False,
         "contamination_warning": kb["contamination_warning"],
         "disposal_instructions": kb["disposal_instructions"],
-        "vision_engine": "GreenRoute Computer Vision (Heuristic v2)"
+        "vision_engine": "GreenRoute Heuristic Color Profiler (Estimated)"
     }
 
 def classify_waste(image_data: Optional[str] = None, sample_name: Optional[str] = None) -> Dict[str, Any]:

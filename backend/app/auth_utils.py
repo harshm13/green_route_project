@@ -9,7 +9,35 @@ from sqlalchemy.orm import Session
 from .database import SessionLocal
 from . import models
 
-SECRET_KEY = os.getenv("JWT_SECRET", "greenroute-super-secure-jwt-secret-key-2026-production")
+import secrets
+from pathlib import Path
+
+DEPRECATED_OLD_KEY = "greenroute-super-secure-jwt-secret-key-2026-production"
+
+def _resolve_jwt_secret() -> str:
+    env_secret = os.getenv("JWT_SECRET")
+    if env_secret:
+        if env_secret == DEPRECATED_OLD_KEY:
+            raise RuntimeError(
+                "Insecure deployment: JWT_SECRET matches the deprecated hardcoded default. "
+                "A unique deployment-specific secret is required."
+            )
+        return env_secret
+
+    secret_file = Path(__file__).resolve().parent.parent.parent / ".jwt_secret"
+    if secret_file.exists():
+        secret = secret_file.read_text().strip()
+        if secret and secret != DEPRECATED_OLD_KEY:
+            return secret
+
+    new_secret = secrets.token_urlsafe(32)
+    try:
+        secret_file.write_text(new_secret)
+    except Exception:
+        pass
+    return new_secret
+
+SECRET_KEY = _resolve_jwt_secret()
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 # 24 hours
 
@@ -46,7 +74,15 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 def decode_access_token(token: str) -> Optional[dict]:
-    """Decode and validate a JWT access token."""
+    """Decode and validate a JWT access token, explicitly invalidating tokens signed with old key."""
+    # Invalidate any token signed with the deprecated fallback key
+    try:
+        deprecated_check = jwt.decode(token, DEPRECATED_OLD_KEY, algorithms=[ALGORITHM])
+        if deprecated_check:
+            return None
+    except jwt.PyJWTError:
+        pass
+
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload

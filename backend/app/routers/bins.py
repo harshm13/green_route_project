@@ -121,14 +121,28 @@ def update_bin_fill_level(
     db.refresh(db_bin)
     return db_bin
 
-# 5. Re-seed bins if empty
-@router.post("/seed")
-def seed_bins(db: Session = Depends(get_db)):
-    from ..seed import seed_database
-    seed_database()
-    return {"status": "success", "message": "Campus bins and demo data re-seeded successfully!"}
-
 # --- REAL PRODUCTION QR & PHYSICAL BIN LABEL SYSTEM ---
+
+# 5. Verify a Scanned Physical Bin QR Token
+@router.get("/{bin_id}/verify-qr", summary="Verify physical bin QR code token against server secret")
+def verify_qr(
+    bin_id: int,
+    token: str = Query(..., description="Cryptographic QR token scanned from bin label"),
+    db: Session = Depends(get_db)
+):
+    bin_obj = db.query(models.Bin).filter(models.Bin.id == bin_id).first()
+    if not bin_obj:
+        raise HTTPException(status_code=404, detail="Bin not found")
+    
+    from ..qr_service import verify_bin_qr_token
+    valid = verify_bin_qr_token(bin_id=bin_obj.id, tenant_id=bin_obj.tenant_id, token=token)
+    return {
+        "status": "success" if valid else "invalid",
+        "valid": valid,
+        "bin_id": bin_obj.id,
+        "tenant_id": bin_obj.tenant_id,
+        "name": bin_obj.name
+    }
 
 # 6. Get Raw Scannable QR Matrix Image (PNG)
 @router.get("/{bin_id}/qr", summary="Generate real scannable QR code PNG for a smart bin")
@@ -141,9 +155,10 @@ def get_bin_qr_image(
     if not bin_obj:
         raise HTTPException(status_code=404, detail="Bin not found")
     
-    from ..qr_service import generate_bin_qr_code
-    base_url = str(request.base_url).rstrip("/")
-    img = generate_bin_qr_code(bin_id=bin_obj.id, tenant_id=bin_obj.tenant_id, base_url=base_url)
+    import os
+    from ..qr_service import generate_bin_qr_code, DEFAULT_FRONTEND_URL
+    frontend_url = os.getenv("FRONTEND_URL", DEFAULT_FRONTEND_URL)
+    img = generate_bin_qr_code(bin_id=bin_obj.id, tenant_id=bin_obj.tenant_id, frontend_url=frontend_url)
     
     import io
     buf = io.BytesIO()
@@ -162,8 +177,9 @@ def get_bin_printable_label(
     if not bin_obj:
         raise HTTPException(status_code=404, detail="Bin not found")
         
-    from ..qr_service import generate_printable_bin_label
-    base_url = str(request.base_url).rstrip("/")
+    import os
+    from ..qr_service import generate_printable_bin_label, DEFAULT_FRONTEND_URL
+    frontend_url = os.getenv("FRONTEND_URL", DEFAULT_FRONTEND_URL)
     
     bin_dict = {
         "id": bin_obj.id,
@@ -174,7 +190,7 @@ def get_bin_printable_label(
         "longitude": bin_obj.longitude
     }
     
-    label_bytes = generate_printable_bin_label(bin_dict, base_url=base_url)
+    label_bytes = generate_printable_bin_label(bin_dict, frontend_url=frontend_url)
     headers = {}
     if download:
         filename = f"greenroute_sticker_bin_{bin_obj.id:03d}.png"
@@ -195,8 +211,9 @@ def download_all_qr_labels(
         query = query.filter(models.Bin.tenant_id == tenant_id)
     bins = query.all()
     
-    from ..qr_service import generate_all_labels_zip
-    base_url = str(request.base_url).rstrip("/")
+    import os
+    from ..qr_service import generate_all_labels_zip, DEFAULT_FRONTEND_URL
+    frontend_url = os.getenv("FRONTEND_URL", DEFAULT_FRONTEND_URL)
     
     bins_data = [
         {
@@ -210,7 +227,7 @@ def download_all_qr_labels(
         for b in bins
     ]
     
-    zip_bytes = generate_all_labels_zip(bins_data, base_url=base_url)
+    zip_bytes = generate_all_labels_zip(bins_data, frontend_url=frontend_url)
     headers = {
         "Content-Disposition": 'attachment; filename="greenroute_smart_bin_labels_all.zip"'
     }

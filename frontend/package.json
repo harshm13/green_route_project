@@ -1,0 +1,12 @@
+{
+  "name": "green-route-frontend",
+  "version": "1.2.0",
+  "description": "GreenRoute Smart Waste Management - Web Frontend",
+  "scripts": {
+    "start": "serve -l 5500 .",
+    "dev": "serve -l 5500 ."
+  },
+  "devDependencies": {
+    "serve": "^14.2.4"
+  }
+}

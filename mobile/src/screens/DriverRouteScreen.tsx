@@ -9,7 +9,7 @@ import {
   Alert,
 } from "react-native";
 import * as Haptics from "expo-haptics";
-import { fetchAllBins, SmartBin } from "../services/api";
+import { fetchAllBins, markBinEmptied, SmartBin } from "../services/api";
 
 export const DriverRouteScreen: React.FC = () => {
   const [bins, setBins] = useState<SmartBin[]>([]);
@@ -37,13 +37,21 @@ export const DriverRouteScreen: React.FC = () => {
         { text: "Cancel", style: "cancel" },
         {
           text: "Confirm Emptied",
-          onPress: () => {
-            setBins((prev) =>
-              prev.map((b) =>
-                b.id === bin.id ? { ...b, fill_level: 0, is_full: false } : b
-              )
-            );
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          onPress: async () => {
+            try {
+              const updated = await markBinEmptied(bin.id);
+              setBins((prev) =>
+                prev.map((b) =>
+                  b.id === bin.id
+                    ? { ...b, fill_level: updated.fill_level, is_full: updated.is_full }
+                    : b
+                )
+              );
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              Alert.alert("Collection Recorded", `Bin #${bin.id} successfully updated on server.`);
+            } catch (err: any) {
+              Alert.alert("Collection Failed", err.message || "Failed to update bin on server.");
+            }
           },
         },
       ]
