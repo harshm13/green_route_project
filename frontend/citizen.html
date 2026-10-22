@@ -453,13 +453,25 @@
             </div>
 
             <!-- 1-Click Interactive Test Samples -->
-            <div style="font-size: 0.75rem; font-weight: 700; color: #4B5563; text-transform: uppercase; letter-spacing: 0.5px;">Or Test 1-Click Preset Sample:</div>
-            <div class="sample-chips-row">
+            <div id="sample-chips-label" style="font-size: 0.75rem; font-weight: 700; color: #4B5563; text-transform: uppercase; letter-spacing: 0.5px;">Or Test 1-Click Preset Waste Sample:</div>
+            <div class="sample-chips-row" id="waste-sample-chips-row">
                 <button type="button" class="sample-chip active" id="sample-chip-plastic" onclick="testVisionSample('plastic', this)">🧴 PET Bottle</button>
                 <button type="button" class="sample-chip" id="sample-chip-metal" onclick="testVisionSample('metal', this)">🥫 Aluminum Can</button>
                 <button type="button" class="sample-chip" id="sample-chip-organic" onclick="testVisionSample('organic', this)">🍏 Food Scraps</button>
                 <button type="button" class="sample-chip" id="sample-chip-ewaste" onclick="testVisionSample('e-waste', this)">🔋 Li-Ion Battery</button>
                 <button type="button" class="sample-chip" id="sample-chip-paper" onclick="testVisionSample('paper', this)">📦 Cardboard</button>
+            </div>
+
+            <!-- 1-Click QR Test Chips (Shown when in Real QR Bin Reader Mode) -->
+            <div class="sample-chips-row" id="qr-sample-chips-row" style="display: none; flex-wrap: wrap; gap: 6px;">
+                <button type="button" class="sample-chip" onclick="simulateQrScan(1)">📍 Bin #1 Cafeteria</button>
+                <button type="button" class="sample-chip" onclick="simulateQrScan(2)">📍 Bin #2 Admin</button>
+                <button type="button" class="sample-chip" onclick="simulateQrScan(3)">📍 Bin #3 Library</button>
+                <button type="button" class="sample-chip" onclick="simulateQrScan(4)">📍 Bin #4 Sports</button>
+                <button type="button" class="sample-chip" onclick="simulateQrScan(5)">📍 Bin #5 Hostel A</button>
+                <button type="button" class="sample-chip" onclick="simulateQrScan(6)">📍 Bin #6 Hostel B</button>
+                <button type="button" class="sample-chip" onclick="simulateQrScan(7)">📍 Bin #7 Workshop</button>
+                <button type="button" class="sample-chip" onclick="simulateQrScan(8)">📍 Bin #8 Biotech</button>
             </div>
 
             <!-- AI Classification Result Card -->
@@ -560,11 +572,14 @@
                 💡 <strong>What to do next:</strong> Visit and scan a different physical smart bin on campus to earn fresh green points and receive a brand new reward reference code!
             </div>
 
-            <div style="display: flex; gap: 10px;">
+            <div style="display: flex; gap: 8px;">
                 <button class="btn btn-primary" onclick="closeAlreadyScannedModal(); scrollToMap();" style="flex: 1; font-size: 0.85rem; padding: 10px;">
                     🗺️ Find Other Bins
                 </button>
-                <button class="btn btn-outline" onclick="closeAlreadyScannedModal()" style="flex: 1; font-size: 0.85rem; padding: 10px;">
+                <button class="btn btn-outline" onclick="resetDemoScansAndReopen()" style="flex: 1; font-size: 0.82rem; padding: 10px; border-color: #10B981; color: #047857; font-weight: 700;">
+                    🔄 Reset for Testing
+                </button>
+                <button class="btn btn-outline" onclick="closeAlreadyScannedModal()" style="padding: 10px 14px; font-size: 0.85rem;">
                     Close
                 </button>
             </div>
@@ -600,7 +615,10 @@
                     <a href="login.html?action=login&role=citizen" class="btn btn-outline" style="flex: 1; text-decoration: none; padding: 8px; font-size: 0.85rem;">
                         Sign In
                     </a>
-                    <button class="btn btn-outline" onclick="closeDemoLimitModal()" style="flex: 1; padding: 8px; font-size: 0.85rem;">
+                    <button class="btn btn-outline" onclick="resetDemoScansAndReopen()" style="flex: 1; padding: 8px; font-size: 0.82rem; border-color: #10B981; color: #047857; font-weight: 700;">
+                        🔄 Reset Demo
+                    </button>
+                    <button class="btn btn-outline" onclick="closeDemoLimitModal()" style="padding: 8px 12px; font-size: 0.85rem;">
                         Close
                     </button>
                 </div>
@@ -690,6 +708,7 @@
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <script src="auth.js"></script>
     <script src="js/sfx.js"></script>
     <script src="js/qr-security.js"></script>

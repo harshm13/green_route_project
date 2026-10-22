@@ -127,16 +127,25 @@ function animateValue(obj, start, end, duration) {
 }
 
 // --- SMART BIN MAP ---
-async function initCitizenMap() {
-    if (citizenMap) return;
+let citizenMarkers = [];
 
-    // Center around Silver Oak University campus coordinates
-    citizenMap = L.map('campus-map').setView([23.0835, 72.5458], 15);
+async function initCitizenMap(forceReload = false) {
+    if (citizenMap && !forceReload) return;
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '© OpenStreetMap'
-    }).addTo(citizenMap);
+    if (!citizenMap) {
+        // Center around Silver Oak University campus coordinates
+        citizenMap = L.map('campus-map').setView([23.0835, 72.5458], 15);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(citizenMap);
+    } else {
+        citizenMarkers.forEach(m => {
+            try { citizenMap.removeLayer(m); } catch (e) {}
+        });
+        citizenMarkers = [];
+    }
 
     const greenIcon = L.icon({
         iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
@@ -169,6 +178,7 @@ async function initCitizenMap() {
 
         const isScanned = window.GreenRouteQRSecurity ? GreenRouteQRSecurity.isBinAlreadyScanned(bin.id) : false;
         const marker = L.marker([bin.lat, bin.lng], { icon: iconToUse }).addTo(citizenMap);
+        citizenMarkers.push(marker);
         
         marker.bindPopup(`
             <div style="font-family: 'Outfit', sans-serif; min-width: 180px;">
@@ -414,6 +424,9 @@ function setScannerMode(mode) {
     const placeholderIcon = document.getElementById('placeholder-icon');
     const placeholderTitle = document.getElementById('placeholder-title');
     const placeholderSubtitle = document.getElementById('placeholder-subtitle');
+    const sampleChipsLabel = document.getElementById('sample-chips-label');
+    const wasteChips = document.getElementById('waste-sample-chips-row');
+    const qrChips = document.getElementById('qr-sample-chips-row');
 
     if (mode === 'qr') {
         if (tabQr) {
@@ -432,7 +445,15 @@ function setScannerMode(mode) {
         }
         if (placeholderIcon) placeholderIcon.innerText = '🏁📱';
         if (placeholderTitle) placeholderTitle.innerText = 'Real Smart Bin QR Reader Active';
-        if (placeholderSubtitle) placeholderSubtitle.innerText = 'Point camera at physical sticker on bin to auto-select';
+        if (placeholderSubtitle) placeholderSubtitle.innerText = 'Aim camera at physical QR, upload QR image, or tap a sample bin below';
+        if (sampleChipsLabel) sampleChipsLabel.innerText = 'Or Test 1-Click Smart Bin QR (Physical / Simulated):';
+        if (wasteChips) wasteChips.style.display = 'none';
+        if (qrChips) qrChips.style.display = 'flex';
+
+        // Auto-start camera if not already active for smooth user experience
+        if (!activeWebcamStream && typeof toggleWebcam === 'function') {
+            toggleWebcam().catch(() => {});
+        }
 
         startQrDetectionLoop();
     } else {
@@ -453,6 +474,9 @@ function setScannerMode(mode) {
         if (placeholderIcon) placeholderIcon.innerText = '🤖📸';
         if (placeholderTitle) placeholderTitle.innerText = 'AI Vision Scanner Ready';
         if (placeholderSubtitle) placeholderSubtitle.innerText = 'Snap a camera photo, upload, or click a preset sample below';
+        if (sampleChipsLabel) sampleChipsLabel.innerText = 'Or Test 1-Click Preset Waste Sample:';
+        if (wasteChips) wasteChips.style.display = 'flex';
+        if (qrChips) qrChips.style.display = 'none';
 
         stopQrDetectionLoop();
     }
@@ -460,31 +484,57 @@ function setScannerMode(mode) {
 
 async function startQrDetectionLoop() {
     stopQrDetectionLoop();
-    if (!window.BarcodeDetector) {
-        console.log("[GreenRoute QR] BarcodeDetector not natively available in this browser. Fallback active.");
-        return;
+
+    const video = document.getElementById('webcam-feed');
+    let barcodeDetector = null;
+    if (window.BarcodeDetector) {
+        try {
+            barcodeDetector = new window.BarcodeDetector({ formats: ['qr_code'] });
+        } catch (e) {
+            barcodeDetector = null;
+        }
     }
 
-    try {
-        const barcodeDetector = new window.BarcodeDetector({ formats: ['qr_code'] });
-        const video = document.getElementById('webcam-feed');
+    const offscreenCanvas = document.createElement('canvas');
+    const offscreenCtx = offscreenCanvas.getContext('2d');
 
-        qrScanInterval = setInterval(async () => {
-            if (!activeWebcamStream || !video || video.readyState < 2 || currentScannerMode !== 'qr') return;
+    qrScanInterval = setInterval(async () => {
+        if (!activeWebcamStream || !video || video.readyState < 2 || currentScannerMode !== 'qr') return;
+
+        // Strategy A: Native BarcodeDetector (Chrome/Android with flags)
+        if (barcodeDetector) {
             try {
                 const barcodes = await barcodeDetector.detect(video);
                 if (barcodes && barcodes.length > 0) {
                     const rawVal = barcodes[0].rawValue;
-                    console.log("[GreenRoute QR] Live QR Decoded:", rawVal);
+                    console.log("[GreenRoute QR] Live QR Decoded (Native):", rawVal);
                     parseAndApplyScannedQr(rawVal);
+                    return;
                 }
             } catch (err) {
-                // Ignore transient frame decode drops
+                // Transient frame drop
             }
-        }, 400);
-    } catch (e) {
-        console.warn("[GreenRoute QR] BarcodeDetector init failed:", e);
-    }
+        }
+
+        // Strategy B: Universal jsQR detector (Brave, Chrome Desktop, Firefox, Safari)
+        if (window.jsQR) {
+            try {
+                offscreenCanvas.width = video.videoWidth || 320;
+                offscreenCanvas.height = video.videoHeight || 240;
+                offscreenCtx.drawImage(video, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
+                const imgData = offscreenCtx.getImageData(0, 0, offscreenCanvas.width, offscreenCanvas.height);
+                const code = window.jsQR(imgData.data, imgData.width, imgData.height, {
+                    inversionAttempts: "dontInvert"
+                });
+                if (code && code.data) {
+                    console.log("[GreenRoute QR] Live QR Decoded (jsQR):", code.data);
+                    parseAndApplyScannedQr(code.data);
+                }
+            } catch (err) {
+                // Ignore transient frame canvas errors
+            }
+        }
+    }, 350);
 }
 
 function stopQrDetectionLoop() {
@@ -529,7 +579,7 @@ function parseAndApplyScannedQr(rawValue) {
             select.value = parsedId;
         }
         if (window.GreenRouteSFX) GreenRouteSFX.playSuccess();
-        alert(`🎯 Verified Physical Smart Bin #${parsedId} Detected via Camera! Switching to Waste Classification...`);
+        alert(`🎯 Verified Physical Smart Bin #${parsedId} Detected! Switching to Waste Classification...`);
         setScannerMode('waste');
     }
 }
@@ -623,12 +673,41 @@ function handlePhotoUpload(event) {
             activeWebcamStream = null;
             document.getElementById('webcam-btn-text').innerText = "📷 Use Camera";
         }
-        video.classList.add('hidden');
-        placeholder.classList.add('hidden');
-        imgPreview.src = dataUrl;
-        imgPreview.classList.remove('hidden');
+        if (video) video.classList.add('hidden');
+        if (placeholder) placeholder.classList.add('hidden');
+        if (imgPreview) {
+            imgPreview.src = dataUrl;
+            imgPreview.classList.remove('hidden');
+        }
 
-        classifyAndDisplay(dataUrl, null);
+        // Check if the uploaded image contains a Smart Bin QR code
+        const testImg = new Image();
+        testImg.onload = function() {
+            let qrFound = false;
+            if (window.jsQR) {
+                try {
+                    const offCanvas = document.createElement('canvas');
+                    offCanvas.width = testImg.width;
+                    offCanvas.height = testImg.height;
+                    const offCtx = offCanvas.getContext('2d');
+                    offCtx.drawImage(testImg, 0, 0);
+                    const imgData = offCtx.getImageData(0, 0, offCanvas.width, offCanvas.height);
+                    const code = window.jsQR(imgData.data, offCanvas.width, offCanvas.height);
+                    if (code && code.data) {
+                        qrFound = true;
+                        console.log("[GreenRoute QR] Uploaded QR Decoded:", code.data);
+                        parseAndApplyScannedQr(code.data);
+                    }
+                } catch (err) {
+                    console.warn("[GreenRoute QR] Error decoding uploaded QR:", err);
+                }
+            }
+            if (!qrFound) {
+                // If no QR found or normal waste item, run multimodal classification
+                classifyAndDisplay(dataUrl, null);
+            }
+        };
+        testImg.src = dataUrl;
     };
     reader.readAsDataURL(file);
 }
@@ -864,6 +943,8 @@ async function updateLeaderboard() {
         `;
         list.appendChild(li);
     });
+}
+
 // --- REWARD VOUCHER MODAL & ANTI-FRAUD LEDGER HANDLERS ---
 let currentActiveModalVoucher = null;
 
@@ -1097,6 +1178,25 @@ function scrollToMap() {
     }
 }
 
+function simulateQrScan(binId) {
+    parseAndApplyScannedQr(`https://frontend.vercel.app/citizen.html?bin_id=${binId}&tenant=sou`);
+}
+
+function resetDemoScansAndReopen() {
+    if (window.GreenRouteQRSecurity) {
+        GreenRouteQRSecurity.resetDemoLimits();
+    }
+    closeDemoLimitModal();
+    closeAlreadyScannedModal();
+    updateVoucherButtonBadge();
+    updateScannerDemoUI();
+    if (citizenMap && typeof initCitizenMap === 'function') {
+        initCitizenMap(true);
+    }
+    openScannerModal();
+    alert("✨ Demo scans and bin locks have been reset! You can now scan freely.");
+}
+
 window.openScannerModal = openScannerModal;
 window.openScannerForBin = openScannerForBin;
 window.closeScannerModal = closeScannerModal;
@@ -1124,3 +1224,5 @@ window.closeAllVouchersModal = closeAllVouchersModal;
 window.copyVoucherCode = copyVoucherCode;
 window.redeemVoucherFromList = redeemVoucherFromList;
 window.updateVoucherButtonBadge = updateVoucherButtonBadge;
+window.simulateQrScan = simulateQrScan;
+window.resetDemoScansAndReopen = resetDemoScansAndReopen;

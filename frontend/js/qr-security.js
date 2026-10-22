@@ -306,6 +306,22 @@ const GreenRouteQRSecurity = (function() {
         };
     }
 
+    function resetDemoLimits() {
+        const vault = loadVault();
+        vault.demoScansCount = 0;
+        vault.scannedBins = [];
+        saveVault(vault);
+        return { success: true, message: "Demo scans and claimed bins reset successfully!" };
+    }
+
+    function resetScannedBin(binId) {
+        const vault = loadVault();
+        const bId = Number(binId);
+        vault.scannedBins = (vault.scannedBins || []).filter(id => id !== bId);
+        saveVault(vault);
+        return { success: true, message: `Bin #${bId} unlocked for re-scanning!` };
+    }
+
     return {
         validateScanAttempt,
         recordVerifiedScan,
@@ -315,7 +331,9 @@ const GreenRouteQRSecurity = (function() {
         getScannedBins,
         isBinAlreadyScanned,
         getDemoStats,
-        isDemoMode
+        isDemoMode,
+        resetDemoLimits,
+        resetScannedBin
     };
 })();
 
