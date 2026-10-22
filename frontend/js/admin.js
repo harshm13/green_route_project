@@ -81,6 +81,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
     });
+
+    // 5. Responsive mobile view initialization
+    if (window.innerWidth <= 900) {
+        switchAdminMobileView('map');
+    }
+    window.addEventListener('resize', () => {
+        if (window.innerWidth <= 900) {
+            const isOps = document.getElementById('btn-mobile-ops')?.classList.contains('active');
+            switchAdminMobileView(isOps ? 'ops' : 'map');
+        } else {
+            const sidebar = document.querySelector('.admin-sidebar');
+            const mainStage = document.querySelector('.admin-main-stage');
+            if (sidebar) sidebar.classList.remove('mobile-hidden');
+            if (mainStage) mainStage.classList.remove('mobile-hidden');
+            if (adminMap) adminMap.invalidateSize();
+        }
+    });
 });
 
 // --- PENDING APPROVALS BADGE ---
@@ -817,13 +834,13 @@ function downloadAllQrLabelsZip() {
 
 function switchAdminMobileView(view) {
     const sidebar = document.querySelector('.admin-sidebar');
-    const mapViewport = document.querySelector('.map-viewport');
+    const mainStage = document.querySelector('.admin-main-stage');
     const btnMap = document.getElementById('btn-mobile-map');
     const btnOps = document.getElementById('btn-mobile-ops');
 
     if (view === 'map') {
         if (sidebar) sidebar.classList.add('mobile-hidden');
-        if (mapViewport) mapViewport.classList.remove('mobile-hidden');
+        if (mainStage) mainStage.classList.remove('mobile-hidden');
         if (btnMap) btnMap.classList.add('active');
         if (btnOps) btnOps.classList.remove('active');
         if (adminMap) {
@@ -833,10 +850,11 @@ function switchAdminMobileView(view) {
         }
     } else {
         if (sidebar) sidebar.classList.remove('mobile-hidden');
-        if (mapViewport) mapViewport.classList.add('mobile-hidden');
+        if (mainStage) mainStage.classList.add('mobile-hidden');
         if (btnOps) btnOps.classList.add('active');
         if (btnMap) btnMap.classList.remove('active');
     }
+}
 function toggleAdminNavMobile() {
     const drawer = document.getElementById('admin-mobile-nav-drawer');
     const toggleBtn = document.getElementById('admin-nav-toggle-btn');

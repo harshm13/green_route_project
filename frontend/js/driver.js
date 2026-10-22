@@ -41,6 +41,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 3. Load live route with OSRM street network
     await loadDriverManifest();
+
+    // 4. Responsive mobile view initialization
+    if (window.innerWidth <= 850) {
+        switchDriverView('map');
+    }
+    window.addEventListener('resize', () => {
+        if (window.innerWidth <= 850) {
+            const isDetails = document.getElementById('btn-driver-details')?.classList.contains('active');
+            switchDriverView(isDetails ? 'details' : 'map');
+        } else {
+            const cardTarget = document.getElementById('driver-card-target');
+            const cardMap = document.getElementById('driver-card-map');
+            const cardManifest = document.getElementById('driver-card-manifest');
+            if (cardTarget) cardTarget.classList.remove('mobile-hidden');
+            if (cardMap) cardMap.classList.remove('mobile-hidden');
+            if (cardManifest) cardManifest.classList.remove('mobile-hidden');
+            if (driverMap) driverMap.invalidateSize();
+        }
+    });
 });
 
 function initDriverMap() {
@@ -145,6 +164,22 @@ function renderActiveStopCard() {
     btn.innerHTML = `<span>✅</span> Mark #${stop.step} Emptied &amp; Advance`;
     btn.disabled = false;
     btn.style.opacity = "1";
+
+    // Synchronize Mobile Bottom Dock & Maneuver Elements
+    const mobileSummary = document.getElementById('mobile-stop-summary');
+    if (mobileSummary) mobileSummary.innerText = `📍 Stop #${stop.step}: ${bin.name} (${bin.fill_level}%)`;
+    const mobileDist = document.getElementById('mobile-stop-distance');
+    if (mobileDist) mobileDist.innerText = `${stop.distanceFromPrevKm} km`;
+    const mobileBtn = document.getElementById('btn-mobile-empty-stop');
+    if (mobileBtn) {
+        mobileBtn.innerHTML = `<span>✅</span> Mark #${stop.step} Emptied &amp; Advance`;
+        mobileBtn.disabled = false;
+        mobileBtn.style.opacity = "1";
+    }
+    const mobileManeuverIcon = document.getElementById('mobile-maneuver-icon');
+    const mobileManeuverText = document.getElementById('mobile-maneuver-text');
+    if (mobileManeuverIcon) mobileManeuverIcon.innerText = document.getElementById('maneuver-icon')?.innerText || "⬆️";
+    if (mobileManeuverText) mobileManeuverText.innerText = document.getElementById('maneuver-text')?.innerText || `Proceed directly to ${bin.name}`;
 }
 
 function renderManifestChecklist() {
@@ -349,7 +384,36 @@ function exportCurrentManifest() {
     }
 }
 
+function switchDriverView(view) {
+    const cardTarget = document.getElementById('driver-card-target');
+    const cardMap = document.getElementById('driver-card-map');
+    const cardManifest = document.getElementById('driver-card-manifest');
+    const btnMap = document.getElementById('btn-driver-map');
+    const btnDetails = document.getElementById('btn-driver-details');
+
+    if (view === 'map') {
+        if (cardTarget) cardTarget.classList.add('mobile-hidden');
+        if (cardManifest) cardManifest.classList.add('mobile-hidden');
+        if (cardMap) cardMap.classList.remove('mobile-hidden');
+        if (btnMap) btnMap.classList.add('active');
+        if (btnDetails) btnDetails.classList.remove('active');
+        if (driverMap) {
+            setTimeout(() => {
+                driverMap.invalidateSize();
+                recenterDriverMap();
+            }, 150);
+        }
+    } else {
+        if (cardTarget) cardTarget.classList.remove('mobile-hidden');
+        if (cardManifest) cardManifest.classList.remove('mobile-hidden');
+        if (cardMap) cardMap.classList.add('mobile-hidden');
+        if (btnDetails) btnDetails.classList.add('active');
+        if (btnMap) btnMap.classList.remove('active');
+    }
+}
+
 window.confirmCurrentStopEmptied = confirmCurrentStopEmptied;
 window.toggleDriveSimulation = toggleDriveSimulation;
 window.recenterDriverMap = recenterDriverMap;
 window.exportCurrentManifest = exportCurrentManifest;
+window.switchDriverView = switchDriverView;

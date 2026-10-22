@@ -92,6 +92,57 @@
             box-sizing: border-box;
         }
 
+        /* Driver Mobile Switcher */
+        .driver-mobile-switcher {
+            display: none;
+            background: #090D16;
+            padding: 6px 12px;
+            gap: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 70px;
+            z-index: 99;
+        }
+
+        .driver-mobile-tab {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            background: #1E293B;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #94A3B8;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .driver-mobile-tab.active {
+            background: #10B981;
+            color: #FFFFFF;
+            border-color: #10B981;
+            box-shadow: 0 2px 10px rgba(16, 185, 129, 0.35);
+        }
+
+        .driver-mobile-map-overlay {
+            display: none;
+        }
+
+        .driver-nav-top-row {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .driver-nav-actions {
+            display: flex;
+            gap: 8px;
+        }
+
         @media (max-width: 1200px) {
             .cockpit-container {
                 grid-template-columns: 1fr;
@@ -99,30 +150,141 @@
             }
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 850px) {
             body.driver-body {
-                padding-top: 110px;
+                padding-top: 136px;
             }
+
             .driver-navbar {
                 height: auto;
-                padding: 10px 14px;
-                flex-wrap: wrap;
-                gap: 8px;
+                padding: 8px 12px;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 6px;
             }
-            .driver-hud-strip {
+
+            .driver-nav-top-row {
                 width: 100%;
                 justify-content: space-between;
                 gap: 8px;
-                border-top: 1px solid rgba(255, 255, 255, 0.08);
-                padding-top: 6px;
             }
+
+            .driver-brand {
+                font-size: 1.05rem;
+            }
+
+            .driver-nav-actions .map-control-btn {
+                padding: 4px 10px;
+                font-size: 0.75rem;
+            }
+
+            .driver-hud-strip {
+                width: 100%;
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 4px;
+                background: rgba(0, 0, 0, 0.35);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 10px;
+                padding: 6px 4px;
+                box-sizing: border-box;
+            }
+
+            .hud-item {
+                align-items: center;
+                text-align: center;
+            }
+
+            .hud-val {
+                font-size: 0.88rem;
+                font-weight: 800;
+                line-height: 1.1;
+            }
+
+            .hud-lbl {
+                font-size: 0.58rem;
+                color: #94A3B8;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
+                letter-spacing: 0;
+                margin-top: 2px;
+            }
+
+            .driver-mobile-switcher {
+                display: flex;
+                top: 86px;
+            }
+
             .cockpit-container {
                 padding: 10px;
                 gap: 12px;
+                height: auto;
+                min-height: calc(100dvh - 146px);
+                display: flex;
+                flex-direction: column;
             }
+
+            #driver-card-target.mobile-hidden,
+            #driver-card-manifest.mobile-hidden,
+            #driver-card-map.mobile-hidden {
+                display: none !important;
+            }
+
+            #driver-card-map {
+                height: calc(100dvh - 165px) !important;
+                min-height: 440px;
+                position: relative;
+                overflow: hidden;
+                border-radius: 16px;
+            }
+
             #driver-map {
-                height: 280px !important;
+                height: 100% !important;
+                min-height: 100% !important;
+                width: 100%;
+            }
+
+            .driver-mobile-map-overlay {
+                display: block;
+            }
+
+            .mobile-maneuver-card {
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                right: 10px;
+                z-index: 500;
+                background: rgba(15, 23, 42, 0.92);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border: 1px solid rgba(56, 189, 248, 0.35);
+                border-radius: 12px;
+                padding: 6px 12px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.45);
+            }
+
+            .mobile-bottom-dock {
+                position: absolute;
+                bottom: 10px;
+                left: 10px;
+                right: 10px;
+                z-index: 500;
+                background: rgba(15, 23, 42, 0.94);
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+                border: 1px solid rgba(255, 255, 255, 0.14);
                 border-radius: 14px;
+                padding: 10px 12px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.65);
+            }
+
+            .map-overlay-controls {
+                display: none !important;
             }
         }
 
@@ -358,40 +520,51 @@
 
     <!-- Top Cockpit Navigation Bar -->
     <nav class="driver-navbar">
-        <a href="index.html" class="driver-brand">
-            <span>🚚</span> GreenRoute Driver Cab
-        </a>
+        <div class="driver-nav-top-row">
+            <a href="index.html" class="driver-brand">
+                <span>🚚</span> GreenRoute Driver Cab
+            </a>
+            <div class="driver-nav-actions">
+                <a href="admin.html" class="map-control-btn" style="text-decoration: none;">🗺️ Admin</a>
+                <a href="#" onclick="logoutUser(event)" class="map-control-btn" style="text-decoration: none;">🚪 Exit</a>
+            </div>
+        </div>
 
         <div class="driver-hud-strip">
             <div class="hud-item">
                 <span class="hud-val" id="hud-progress">Stop 0 of 0</span>
-                <span class="hud-lbl">Manifest Progress</span>
+                <span class="hud-lbl">Manifest</span>
             </div>
             <div class="hud-item">
                 <span class="hud-val" id="hud-distance">0.0 km</span>
-                <span class="hud-lbl">Road Distance</span>
+                <span class="hud-lbl">Distance</span>
             </div>
             <div class="hud-item">
                 <span class="hud-val" id="hud-duration">0.0 mins</span>
-                <span class="hud-lbl">Est. Driving Time</span>
+                <span class="hud-lbl">Est. Time</span>
             </div>
             <div class="hud-item">
                 <span class="hud-val" id="hud-truck-fill">0%</span>
-                <span class="hud-lbl">Truck Payload</span>
+                <span class="hud-lbl">Payload</span>
             </div>
         </div>
-
-        <div style="display: flex; gap: 8px;">
-            <a href="admin.html" class="map-control-btn" style="text-decoration: none;">🗺️ Admin Dispatch</a>
-            <a href="#" onclick="logoutUser(event)" class="map-control-btn" style="text-decoration: none;">🚪 Exit</a>
-        </div>
     </nav>
+
+    <!-- MOBILE ADAPTIVE VIEW SWITCHER (Visible on screens <= 850px) -->
+    <div class="driver-mobile-switcher" id="driver-mobile-switcher">
+        <button class="driver-mobile-tab active" id="btn-driver-map" onclick="switchDriverView('map')">
+            <span>🗺️</span> Turn-by-Turn GPS Map
+        </button>
+        <button class="driver-mobile-tab" id="btn-driver-details" onclick="switchDriverView('details')">
+            <span>📋</span> Stop Details &amp; Manifest
+        </button>
+    </div>
 
     <!-- Cockpit Main Area -->
     <div class="cockpit-container">
 
         <!-- 1. LEFT CARD: ACTIVE TARGET STOP & ACTIONS -->
-        <aside class="cockpit-card">
+        <aside class="cockpit-card mobile-hidden" id="driver-card-target">
             <div class="stop-progress-header">
                 <span class="stop-progress-badge" id="current-badge">
                     <span>📍</span> TARGET STOP
@@ -444,9 +617,38 @@
         </aside>
 
         <!-- 2. CENTER: INTERACTIVE LEAFLET ROAD MAP -->
-        <main class="cockpit-card driver-map-stage" style="padding: 0;">
+        <main class="cockpit-card driver-map-stage" id="driver-card-map" style="padding: 0;">
             <div id="driver-map"></div>
 
+            <!-- Mobile-Optimized Driver Map Overlay (Turn Maneuver + One-Touch Action Dock) -->
+            <div class="driver-mobile-map-overlay" id="driver-mobile-map-overlay">
+                <div class="mobile-maneuver-card">
+                    <span class="maneuver-icon" id="mobile-maneuver-icon" style="font-size: 1.4rem;">⬆️</span>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-size: 0.65rem; color: #7DD3FC; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Next Maneuver</div>
+                        <div style="font-size: 0.85rem; font-weight: 700; color: #FFFFFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="mobile-maneuver-text">Proceed on campus route</div>
+                    </div>
+                </div>
+
+                <div class="mobile-bottom-dock">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="font-size: 0.85rem; font-weight: 800; color: #FFFFFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 75%;" id="mobile-stop-summary">
+                            📍 Stop #1: Loading...
+                        </div>
+                        <span style="font-size: 0.75rem; color: #38BDF8; font-weight: 800; background: rgba(56, 189, 248, 0.15); padding: 2px 7px; border-radius: 6px;" id="mobile-stop-distance">0.0 km</span>
+                    </div>
+                    <button class="btn-driver-action" id="btn-mobile-empty-stop" onclick="confirmCurrentStopEmptied()" style="padding: 12px; font-size: 1rem; margin-top: 0; border-radius: 12px; width: 100%;">
+                        <span>✅</span> Mark Emptied &amp; Advance
+                    </button>
+                    <div style="display: flex; gap: 6px; margin-top: 8px;">
+                        <button class="map-control-btn" style="flex: 1; padding: 6px; font-size: 0.72rem; justify-content: center; display: flex; align-items: center; border-radius: 8px;" onclick="recenterDriverMap()">🎯 Recenter</button>
+                        <button class="map-control-btn" id="btn-mobile-sim-drive" style="flex: 1; padding: 6px; font-size: 0.72rem; justify-content: center; display: flex; align-items: center; border-radius: 8px;" onclick="toggleDriveSimulation()">🚗 Sim Drive</button>
+                        <button class="map-control-btn" style="flex: 1; padding: 6px; font-size: 0.72rem; justify-content: center; display: flex; align-items: center; border-radius: 8px;" onclick="switchDriverView('details')">📋 All Stops</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Desktop Map Overlay Controls -->
             <div class="map-overlay-controls">
                 <button class="map-control-btn" id="btn-sim-drive" onclick="toggleDriveSimulation()">
                     🚗 Simulate Driver Route: OFF
@@ -459,7 +661,7 @@
         </main>
 
         <!-- 3. RIGHT CARD: FULL DISPATCH MANIFEST CHECKLIST -->
-        <aside class="cockpit-card">
+        <aside class="cockpit-card mobile-hidden" id="driver-card-manifest">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--driver-border); padding-bottom: 8px; margin-bottom: 8px;">
                 <h3 style="margin: 0; font-size: 1.1rem; color: #FFFFFF;">📋 Manifest Checklist</h3>
                 <span id="manifest-count-badge" style="font-size: 0.75rem; background: #334155; padding: 2px 8px; border-radius: 6px; font-weight: 700;">0 Stops</span>
@@ -476,6 +678,7 @@
         </aside>
 
     </div>
+
 
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
