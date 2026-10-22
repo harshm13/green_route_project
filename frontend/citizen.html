@@ -276,11 +276,17 @@
                     <h2>Citizen Green Dashboard</h2>
                     <p style="color: #6B7280; font-size: 0.9rem; margin-top: 2px;">Silver Oak University • Smart Segregation Hub</p>
                 </div>
-                <div class="user-mini">
-                    <div class="avatar-mini" id="header-avatar">🌱</div>
-                    <div>
-                        <span id="header-user-name" style="font-weight: 700; color: #1F2937; display: block; font-size: 0.95rem;">Citizen User</span>
-                        <span id="header-user-streak" style="font-size: 0.78rem; color: #059669; font-weight: 600;">🔥 0-Day Streak</span>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="btn btn-outline" id="btn-header-vouchers" onclick="openAllVouchersModal()" style="display: flex; align-items: center; gap: 6px; padding: 6px 14px; font-size: 0.82rem; font-weight: 700; border-radius: 20px; border-color: #10B981; color: #047857; background: #ECFDF5; cursor: pointer;">
+                        <span>🎟️ My Vouchers</span>
+                        <span class="badge" id="vouchers-count-badge" style="background: #10B981; color: white; padding: 2px 7px; border-radius: 10px; font-size: 0.75rem;">0</span>
+                    </button>
+                    <div class="user-mini">
+                        <div class="avatar-mini" id="header-avatar">🌱</div>
+                        <div>
+                            <span id="header-user-name" style="font-weight: 700; color: #1F2937; display: block; font-size: 0.95rem;">Citizen User</span>
+                            <span id="header-user-streak" style="font-size: 0.78rem; color: #059669; font-weight: 600;">🔥 0-Day Streak</span>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -322,11 +328,12 @@
                     <!-- Middle Banner: Interactive Scan Trigger -->
                     <div class="bento-card action-banner fade-in delay-2">
                         <div class="banner-text">
-                            <h3 style="color: #064E3B; font-size: 1.35rem; margin-bottom: 4px; font-weight: 700;">Segregate Waste & Earn Points</h3>
-                            <p style="color: #047857; font-size: 0.9rem;">Scan smart bins on campus to log recycling and maintain your daily streak.</p>
+                            <h3 style="color: #064E3B; font-size: 1.35rem; margin-bottom: 4px; font-weight: 700;">Segregate Waste &amp; Earn Points</h3>
+                            <p style="color: #047857; font-size: 0.9rem;">Scan physical smart bins on campus to log verified recycling and claim single-use reward codes.</p>
                         </div>
                         <div class="banner-actions">
                             <button class="btn-banner pulse-btn" id="scan-btn" onclick="openScannerModal()">📷 Scan Smart Bin</button>
+                            <button class="btn-banner-outline" id="vouchers-nav-btn" onclick="openAllVouchersModal()">🎟️ My Vouchers (<span id="banner-vouchers-count">0</span>)</button>
                             <button class="btn-banner-outline" id="rewards-nav-btn" onclick="scrollToRewards()">🏆 Perks Catalog</button>
                         </div>
                     </div>
@@ -387,6 +394,12 @@
                     <p style="color: #6B7280; font-size: 0.8rem; margin: 2px 0 0 0;">Multimodal classification &amp; verified smart bin recycling</p>
                 </div>
                 <button onclick="closeScannerModal()" style="background: rgba(0,0,0,0.06); border: none; font-size: 1.25rem; cursor: pointer; color: #4B5563; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" aria-label="Close Scanner">✕</button>
+            </div>
+
+            <!-- Encrypted Demo Scan Counter Pill -->
+            <div id="scanner-demo-counter-badge" class="hidden" style="margin: 8px 0; font-size: 0.78rem; font-weight: 700; background: #FEF3C7; color: #B45309; padding: 6px 12px; border-radius: 10px; border: 1px solid #FCD34D; display: flex; align-items: center; justify-content: space-between;">
+                <span>⚡ Demo Mode: <span id="demo-scans-left-text">3 of 3 scans left</span></span>
+                <span style="font-size: 0.72rem; color: #92400E; text-decoration: underline; cursor: pointer;" onclick="window.location.href='login.html?action=register&role=citizen'">Sign In for Unlimited</span>
             </div>
 
             <!-- Scanner Mode Toggle: AI Vision vs Real Physical QR Reader -->
@@ -486,7 +499,148 @@
         </div>
     </div>
 
-    <!-- 2. REWARD CLAIM / VOUCHER MODAL -->
+    <!-- 2. REWARD REFERENCE CODE MODAL (Single-Use Token Generated on Every Scan) -->
+    <div id="reward-voucher-modal" class="modal-overlay hidden">
+        <div class="modal-content bento-card claim-style" style="max-width: 440px; text-align: center; padding: 26px;">
+            <div class="modal-icon bounce" style="font-size: 3.5rem;">🎉</div>
+            <h2 style="color: #064E3B; margin: 6px 0 2px 0; font-size: 1.45rem;">Verified Deposit Successful!</h2>
+            <div id="ref-modal-sub" style="font-size: 0.85rem; color: #047857; font-weight: 600; margin-bottom: 12px;">
+                <span id="ref-modal-points">+50 Green Points</span> • <span id="ref-modal-co2">🌱 85g CO₂ saved</span>
+            </div>
+            <p style="color: #4B5563; font-size: 0.88rem; margin-bottom: 14px;">
+                Here is your <strong>One-Time Reward Reference Code</strong> for recycling at <strong id="ref-modal-bin-name">Smart Bin #1</strong>!
+            </p>
+            
+            <div class="voucher-card" id="ref-modal-card">
+                <div style="font-size: 0.76rem; font-weight: 700; color: #047857; text-transform: uppercase; letter-spacing: 0.5px;">Campus Single-Use Voucher Pass</div>
+                <div class="voucher-code-large" id="ref-modal-code">GR-RW-2026-B1K8-9M3Q</div>
+                <div style="margin: 8px 0;">
+                    <button class="btn btn-outline btn-sm" id="btn-copy-ref-code" onclick="copyModalReferenceCode()" style="padding: 4px 14px; font-size: 0.78rem; font-weight: 700; border-radius: 20px; background: #FFFFFF;">
+                        <span id="copy-btn-text">📋 Copy Reference Code</span>
+                    </button>
+                </div>
+                <div style="font-size: 0.82rem; font-weight: 700; color: #1E293B; margin-top: 6px;" id="ref-modal-perk-desc">₹50 OFF on Campus Cafeteria, Bookstore or Stationery</div>
+                <div style="font-size: 0.74rem; color: #047857; margin-top: 4px;" id="ref-modal-status-text">
+                    <span class="voucher-status-pill active" id="ref-modal-status-pill">🟢 ACTIVE • VALID FOR 1 REDEMPTION</span>
+                </div>
+            </div>
+
+            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 10px 12px; font-size: 0.76rem; color: #64748B; margin-bottom: 16px; text-align: left;">
+                🔒 <strong>Single-Use Anti-Fraud Rule:</strong> This reference code can only be used <strong>once</strong> at campus checkout. Every new smart bin QR code you scan generates a brand new reference code!
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button class="btn btn-primary" id="btn-redeem-modal-code" onclick="redeemModalReferenceCode()" style="width: 100%; font-weight: 700; padding: 10px;">
+                    🎁 Redeem Voucher Code at Counter
+                </button>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-outline" onclick="openAllVouchersModal()" style="flex: 1; font-size: 0.85rem; padding: 8px;">
+                        🎟️ View My Vouchers
+                    </button>
+                    <button class="btn btn-outline" onclick="closeRewardVoucherModal()" style="flex: 1; font-size: 0.85rem; padding: 8px;">
+                        Done &amp; Return
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. ALREADY SCANNED / REUSED QR WARNING MODAL -->
+    <div id="already-scanned-modal" class="modal-overlay hidden">
+        <div class="modal-content bento-card claim-style" style="max-width: 400px; text-align: center; padding: 24px;">
+            <div class="modal-icon" style="font-size: 3.5rem;">⚠️</div>
+            <h2 style="color: #B45309; margin: 8px 0 4px 0; font-size: 1.35rem;">QR Code Already Claimed!</h2>
+            <p style="color: #4B5563; font-size: 0.88rem; margin-bottom: 14px;">
+                You have already scanned <strong id="already-scanned-bin-label">Smart Bin</strong> on this device/account.
+            </p>
+            
+            <div style="background: #FEF3C7; border: 1px solid #FCD34D; border-radius: 14px; padding: 14px; text-align: left; font-size: 0.82rem; color: #92400E; margin-bottom: 16px; line-height: 1.5;">
+                🚫 <strong>Single-Use Per QR Rule:</strong> To maintain fair circular recycling, each physical smart bin QR code can only be scanned <strong>once</strong> per device/user.
+                <br><br>
+                💡 <strong>What to do next:</strong> Visit and scan a different physical smart bin on campus to earn fresh green points and receive a brand new reward reference code!
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-primary" onclick="closeAlreadyScannedModal(); scrollToMap();" style="flex: 1; font-size: 0.85rem; padding: 10px;">
+                    🗺️ Find Other Bins
+                </button>
+                <button class="btn btn-outline" onclick="closeAlreadyScannedModal()" style="flex: 1; font-size: 0.85rem; padding: 10px;">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. ENCRYPTED DEMO SCAN LIMIT MODAL -->
+    <div id="demo-limit-modal" class="modal-overlay hidden">
+        <div class="modal-content bento-card claim-style" style="max-width: 420px; text-align: center; padding: 26px;">
+            <div class="modal-icon" style="font-size: 3.5rem;">🔒</div>
+            <h2 style="color: #0F172A; margin: 8px 0 4px 0; font-size: 1.4rem;">Demo Scan Limit Reached</h2>
+            <div style="font-size: 0.85rem; color: #DC2626; font-weight: 700; margin-bottom: 12px;">
+                All 3 of 3 Free Demo Scans Used on this Device
+            </div>
+            <p style="color: #4B5563; font-size: 0.88rem; margin-bottom: 16px; line-height: 1.5;">
+                You've reached the maximum free demo scans allowed on this device. Create or sign in to your Citizen account to unlock <strong>unlimited smart bin scans</strong> and continue claiming reward reference codes!
+            </p>
+            
+            <div style="background: #F0FDF4; border: 1px solid #86EFAC; border-radius: 14px; padding: 12px; text-align: left; font-size: 0.82rem; color: #166534; margin-bottom: 18px;">
+                ✨ <strong>Registration Perks:</strong>
+                <ul style="margin: 6px 0 0 16px; padding: 0; line-height: 1.5;">
+                    <li>Unlimited Physical Smart Bin QR Scans</li>
+                    <li>Official Campus Eco-Leaderboard Ranking</li>
+                    <li>Automatic Points Sync &amp; Unlimited Reward Vouchers</li>
+                </ul>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <a href="login.html?action=register&role=citizen" class="btn btn-primary" style="text-decoration: none; padding: 10px; font-weight: 700;">
+                    🚀 Create Free Citizen Account
+                </a>
+                <div style="display: flex; gap: 8px;">
+                    <a href="login.html?action=login&role=citizen" class="btn btn-outline" style="flex: 1; text-decoration: none; padding: 8px; font-size: 0.85rem;">
+                        Sign In
+                    </a>
+                    <button class="btn btn-outline" onclick="closeDemoLimitModal()" style="flex: 1; padding: 8px; font-size: 0.85rem;">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. ALL REWARD VOUCHERS LEDGER MODAL -->
+    <div id="all-vouchers-modal" class="modal-overlay hidden">
+        <div class="modal-content bento-card" style="max-width: 480px; text-align: left; padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div>
+                    <h3 style="color: #1F2937; margin: 0; font-size: 1.25rem;">🎟️ My Reward Vouchers</h3>
+                    <p style="color: #6B7280; font-size: 0.8rem; margin: 2px 0 0 0;">Single-use reference codes generated from verified scans</p>
+                </div>
+                <button onclick="closeAllVouchersModal()" style="background: rgba(0,0,0,0.06); border: none; font-size: 1.25rem; cursor: pointer; color: #4B5563; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">✕</button>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 14px;">
+                <div style="flex: 1; background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 12px; padding: 10px; text-align: center;">
+                    <div style="font-size: 1.3rem; font-weight: 800; color: #047857;" id="vouchers-active-counter">0</div>
+                    <div style="font-size: 0.72rem; color: #065F46; font-weight: 600;">Active (Ready to Use)</div>
+                </div>
+                <div style="flex: 1; background: #F1F5F9; border: 1px solid #E2E8F0; border-radius: 12px; padding: 10px; text-align: center;">
+                    <div style="font-size: 1.3rem; font-weight: 800; color: #475569;" id="vouchers-total-counter">0</div>
+                    <div style="font-size: 0.72rem; color: #64748B; font-weight: 600;">Total Generated</div>
+                </div>
+            </div>
+
+            <div class="voucher-list-container" id="all-vouchers-list">
+                <!-- Populated dynamically by JS -->
+            </div>
+
+            <button class="btn btn-outline" style="width: 100%; margin-top: 10px;" onclick="closeAllVouchersModal()">
+                Close Vouchers Ledger
+            </button>
+        </div>
+    </div>
+
+    <!-- 6. PERK CLAIM MODAL -->
     <div id="claim-modal" class="modal-overlay hidden">
         <div class="modal-content bento-card claim-style" style="max-width: 400px; text-align: center;">
             <div class="modal-icon bounce" style="font-size: 3.5rem;">🎉</div>
@@ -499,11 +653,11 @@
                 <div style="font-size: 0.75rem; color: #065F46;">Valid for 7 days • Non-transferable</div>
             </div>
 
-            <button class="btn btn-primary" onclick="closeClaimModal()" style="width: 100%;">Done & Return</button>
+            <button class="btn btn-primary" onclick="closeClaimModal()" style="width: 100%;">Done &amp; Return</button>
         </div>
     </div>
     
-    <!-- 3. RANK UP CELEBRATION MODAL -->
+    <!-- 7. RANK UP CELEBRATION MODAL -->
     <div id="rank-up-modal" class="modal-overlay hidden">
         <div class="modal-content bento-card claim-style" style="max-width: 380px; text-align: center;">
             <div class="modal-icon bounce" id="rank-up-icon" style="font-size: 4rem;">⚔️</div>
@@ -514,7 +668,7 @@
         </div>
     </div>
     
-    <!-- 4. RANK TIERS PROGRESS MODAL -->
+    <!-- 8. RANK TIERS PROGRESS MODAL -->
     <div id="rank-progress-modal" class="modal-overlay hidden">
         <div class="modal-content bento-card" style="max-width: 380px; padding: 25px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -538,6 +692,7 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="auth.js"></script>
     <script src="js/sfx.js"></script>
+    <script src="js/qr-security.js"></script>
     <script src="js/data-service.js"></script>
     <script src="js/citizen.js"></script>
 </body>

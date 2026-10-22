@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderQuests();
     renderRewards();
     await updateLeaderboard();
+    updateVoucherButtonBadge();
 
     // 3. Check for Real Physical QR Code in URL (?bin_id=X)
     handleUrlQrDeepLink();
@@ -166,19 +167,26 @@ async function initCitizenMap() {
             statusBadge = '<span style="color: #D97706; font-weight: 700;">Moderate Fill</span>';
         }
 
+        const isScanned = window.GreenRouteQRSecurity ? GreenRouteQRSecurity.isBinAlreadyScanned(bin.id) : false;
         const marker = L.marker([bin.lat, bin.lng], { icon: iconToUse }).addTo(citizenMap);
         
         marker.bindPopup(`
             <div style="font-family: 'Outfit', sans-serif; min-width: 180px;">
                 <h4 style="margin: 0 0 4px; font-size: 0.95rem; color: #1F2937;">${bin.name}</h4>
-                <div style="font-size: 0.8rem; margin-bottom: 6px;">${statusBadge}</div>
+                <div style="font-size: 0.8rem; margin-bottom: 6px;">${isScanned ? '<span style="color: #6B7280; font-weight: 700;">🔒 Already Claimed</span>' : statusBadge}</div>
                 <div style="background: #E5E7EB; height: 6px; border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
                     <div style="background: ${bin.fill_level >= 80 ? '#EF4444' : '#10B981'}; width: ${bin.fill_level}%; height: 100%;"></div>
                 </div>
                 <div style="font-size: 0.78rem; color: #6B7280; margin-bottom: 8px;">Fill Level: <strong>${bin.fill_level}%</strong> (${bin.capacity}L)</div>
-                <button onclick="openScannerForBin(${bin.id})" style="width: 100%; background: #10B981; color: white; border: none; padding: 6px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.82rem;">
-                    📲 Scan Here
-                </button>
+                ${isScanned ? `
+                    <button onclick="showAlreadyScannedModal(${bin.id})" style="width: 100%; background: #94A3B8; color: white; border: none; padding: 6px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.82rem;">
+                        🔒 Scanned on this Device
+                    </button>
+                ` : `
+                    <button onclick="openScannerForBin(${bin.id})" style="width: 100%; background: #10B981; color: white; border: none; padding: 6px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.82rem;">
+                        📲 Scan Here
+                    </button>
+                `}
             </div>
         `);
     });
@@ -280,17 +288,64 @@ let currentVisionClassification = null;
 let currentBase64Image = null;
 
 // --- INTERACTIVE AI VISION SCANNER MODAL ---
+function updateScannerDemoUI() {
+    const badge = document.getElementById('scanner-demo-counter-badge');
+    const textSpan = document.getElementById('demo-scans-left-text');
+    if (!badge || !textSpan || !window.GreenRouteQRSecurity) return;
+
+    const stats = GreenRouteQRSecurity.getDemoStats();
+    if (stats.isDemo) {
+        badge.classList.remove('hidden');
+        textSpan.innerText = `${stats.remaining} of ${stats.max} demo scans left`;
+    } else {
+        badge.classList.add('hidden');
+    }
+}
+
+function handleScanValidationError(validation, binId) {
+    if (validation.reason === 'ALREADY_SCANNED') {
+        showAlreadyScannedModal(binId || validation.binId);
+    } else if (validation.reason === 'DEMO_LIMIT_EXCEEDED') {
+        showDemoLimitModal(validation.scansUsed, validation.maxScans);
+    } else {
+        alert(validation.message || "Scan attempt not allowed.");
+    }
+}
+
 async function openScannerModal() {
+    // Check Demo Mode limit
+    if (window.GreenRouteQRSecurity) {
+        const stats = GreenRouteQRSecurity.getDemoStats();
+        if (stats.isDemo && stats.remaining <= 0) {
+            showDemoLimitModal(stats.used, stats.max);
+            return;
+        }
+    }
+
+    updateScannerDemoUI();
+
     const select = document.getElementById('scan-bin-select');
     const bins = await GreenRouteData.getBins();
 
     select.innerHTML = '';
+    let firstSelectableId = null;
     bins.forEach(b => {
+        const isScanned = window.GreenRouteQRSecurity ? GreenRouteQRSecurity.isBinAlreadyScanned(b.id) : false;
         const opt = document.createElement('option');
         opt.value = b.id;
-        opt.text = `${b.name} (${b.zone.toUpperCase()} • ${b.fill_level}% full)`;
+        opt.text = `${b.name} (${b.zone.toUpperCase()} • ${b.fill_level}% full)${isScanned ? ' 🔒 [ALREADY CLAIMED]' : ''}`;
+        if (isScanned) {
+            opt.disabled = true;
+            opt.style.color = '#94A3B8';
+        } else if (!firstSelectableId) {
+            firstSelectableId = b.id;
+        }
         select.appendChild(opt);
     });
+
+    if (firstSelectableId) {
+        select.value = firstSelectableId;
+    }
 
     document.getElementById('interactive-scan-modal').classList.remove('hidden');
     if (window.GreenRouteSFX) GreenRouteSFX.playScan();
@@ -302,10 +357,18 @@ async function openScannerModal() {
 }
 
 function openScannerForBin(binId) {
+    const parsedId = parseInt(binId, 10);
+    if (window.GreenRouteQRSecurity) {
+        const validation = GreenRouteQRSecurity.validateScanAttempt(parsedId);
+        if (!validation.allowed) {
+            handleScanValidationError(validation, parsedId);
+            return;
+        }
+    }
     openScannerModal();
     setTimeout(() => {
         const select = document.getElementById('scan-bin-select');
-        if (select) select.value = binId;
+        if (select) select.value = parsedId;
     }, 100);
 }
 
@@ -318,13 +381,26 @@ function handleUrlQrDeepLink() {
     const binId = params.get('bin_id') || params.get('scan_bin');
     if (binId) {
         console.log(`[GreenRoute QR] Direct physical QR deep-link detected: Bin #${binId}`);
+        const parsedId = parseInt(binId, 10);
+
+        // Anti-Fraud & Single-Use Check
+        if (window.GreenRouteQRSecurity) {
+            const validation = GreenRouteQRSecurity.validateScanAttempt(parsedId);
+            if (!validation.allowed) {
+                setTimeout(() => {
+                    handleScanValidationError(validation, parsedId);
+                }, 400);
+                return;
+            }
+        }
+
         setTimeout(() => {
-            openScannerForBin(parseInt(binId, 10));
+            openScannerForBin(parsedId);
             if (window.GreenRouteSFX) GreenRouteSFX.playSuccess();
             // Show alert feedback banner
             const modalTitle = document.querySelector('#interactive-scan-modal h3');
             if (modalTitle) {
-                modalTitle.innerHTML = `📷 AI Waste Scanner <span style="font-size: 0.72rem; background: #ECFDF5; color: #047857; padding: 2px 8px; border-radius: 12px; border: 1px solid #10B981;">📍 Physical QR #${binId} Locked</span>`;
+                modalTitle.innerHTML = `📷 AI Waste Scanner <span style="font-size: 0.72rem; background: #ECFDF5; color: #047857; padding: 2px 8px; border-radius: 12px; border: 1px solid #10B981;">📍 Physical QR #${parsedId} Locked</span>`;
             }
         }, 600);
     }
@@ -436,12 +512,24 @@ function parseAndApplyScannedQr(rawValue) {
     }
 
     if (binId) {
+        const parsedId = parseInt(binId, 10);
+        
+        // Single-Use & Demo Limit Enforcement
+        if (window.GreenRouteQRSecurity) {
+            const validation = GreenRouteQRSecurity.validateScanAttempt(parsedId);
+            if (!validation.allowed) {
+                closeScannerModal();
+                handleScanValidationError(validation, parsedId);
+                return;
+            }
+        }
+
         const select = document.getElementById('scan-bin-select');
         if (select) {
-            select.value = binId;
+            select.value = parsedId;
         }
         if (window.GreenRouteSFX) GreenRouteSFX.playSuccess();
-        alert(`🎯 Verified Physical Smart Bin #${binId} Detected via Camera! Switching to Waste Classification...`);
+        alert(`🎯 Verified Physical Smart Bin #${parsedId} Detected via Camera! Switching to Waste Classification...`);
         setScannerMode('waste');
     }
 }
@@ -633,12 +721,24 @@ function selectWasteType(type, element) {
 
 async function confirmVisionScanAndDeposit() {
     const select = document.getElementById('scan-bin-select');
-    const binId = select ? select.value : 1;
+    const binId = select ? parseInt(select.value, 10) : 1;
+
+    // 1. Enforce Anti-Fraud & Single-Use QR & Demo limits
+    if (window.GreenRouteQRSecurity) {
+        const validation = GreenRouteQRSecurity.validateScanAttempt(binId);
+        if (!validation.allowed) {
+            closeScannerModal();
+            handleScanValidationError(validation, binId);
+            return;
+        }
+    }
 
     closeScannerModal();
 
     const userId = localStorage.getItem('user_id') || 1;
     const wType = currentVisionClassification ? currentVisionClassification.waste_type : selectedWasteType;
+    const binName = select && select.options[select.selectedIndex] ? 
+        select.options[select.selectedIndex].text.split('(')[0].trim() : `Smart Bin #${binId}`;
 
     const result = await GreenRouteData.verifyAndScanWaste(userId, binId, currentBase64Image, wType);
 
@@ -650,9 +750,31 @@ async function confirmVisionScanAndDeposit() {
     renderQuests();
     await updateLeaderboard();
 
+    // 2. Record Verified Scan in Encrypted Vault & Generate Fresh One-Time Reference Code
+    let voucherRecord = null;
+    if (window.GreenRouteQRSecurity) {
+        const earnedPoints = result.earned_points || (currentVisionClassification ? Math.round(currentVisionClassification.green_points * currentVisionClassification.multiplier) : 50);
+        voucherRecord = GreenRouteQRSecurity.recordVerifiedScan(binId, binName, earnedPoints, wType);
+        updateVoucherButtonBadge();
+    }
+
+    // Refresh map markers to show locked state for this bin
+    if (citizenMap) {
+        citizenMap.remove();
+        citizenMap = null;
+        await initCitizenMap();
+    }
+
+    // 3. Immediately Pop Reward Reference Code Modal for Citizen
+    if (voucherRecord && voucherRecord.voucher) {
+        showRewardReferenceModal(voucherRecord.voucher, voucherRecord.voucher.points, result);
+    }
+
     if (result.rank && result.rank !== currentRankTitle) {
         currentRankTitle = result.rank;
-        showRankUpModal({ title: result.rank, icon: "⚔️" });
+        setTimeout(() => {
+            showRankUpModal({ title: result.rank, icon: "⚔️" });
+        }, 1200);
     }
 }
 
@@ -742,14 +864,236 @@ async function updateLeaderboard() {
         `;
         list.appendChild(li);
     });
+// --- REWARD VOUCHER MODAL & ANTI-FRAUD LEDGER HANDLERS ---
+let currentActiveModalVoucher = null;
+
+function showRewardReferenceModal(voucher, pointsEarned, result) {
+    currentActiveModalVoucher = voucher;
+    
+    const binEl = document.getElementById('ref-modal-bin-name');
+    const codeEl = document.getElementById('ref-modal-code');
+    const ptsEl = document.getElementById('ref-modal-points');
+    const co2El = document.getElementById('ref-modal-co2');
+    const perkEl = document.getElementById('ref-modal-perk-desc');
+    
+    if (binEl) binEl.innerText = voucher.binName || `Smart Bin #${voucher.binId}`;
+    if (codeEl) codeEl.innerText = voucher.code;
+    if (ptsEl) ptsEl.innerText = `+${pointsEarned} Green Points`;
+    
+    const co2 = result && result.co2_prevented ? result.co2_prevented : (currentVisionClassification ? currentVisionClassification.co2_prevented_grams : 85);
+    if (co2El) co2El.innerText = `🌱 ${co2}g CO₂ saved`;
+    if (perkEl) perkEl.innerText = voucher.discountDesc || "₹50 OFF on Campus Cafeteria, Bookstore or Stationery";
+    
+    const statusPill = document.getElementById('ref-modal-status-pill');
+    const redeemBtn = document.getElementById('btn-redeem-modal-code');
+    if (voucher.status === 'REDEEMED') {
+        if (statusPill) {
+            statusPill.className = 'voucher-status-pill used';
+            statusPill.innerText = '🔴 REDEEMED • ALREADY USED';
+        }
+        if (redeemBtn) {
+            redeemBtn.disabled = true;
+            redeemBtn.innerText = '✅ Code Already Redeemed';
+        }
+    } else {
+        if (statusPill) {
+            statusPill.className = 'voucher-status-pill active';
+            statusPill.innerText = '🟢 ACTIVE • VALID FOR 1 REDEMPTION';
+        }
+        if (redeemBtn) {
+            redeemBtn.disabled = false;
+            redeemBtn.innerText = '🎁 Redeem Voucher Code at Counter';
+        }
+    }
+
+    const copyBtnText = document.getElementById('copy-btn-text');
+    if (copyBtnText) copyBtnText.innerText = '📋 Copy Reference Code';
+
+    const modal = document.getElementById('reward-voucher-modal');
+    if (modal) modal.classList.remove('hidden');
 }
 
-function scrollToRewards() {
-    const section = document.getElementById('rewards-section');
-    if (section) {
-        section.scrollIntoView({ behavior: 'smooth' });
-        section.style.boxShadow = '0 0 20px rgba(16, 185, 129, 0.4)';
-        setTimeout(() => { section.style.boxShadow = ''; }, 1500);
+function closeRewardVoucherModal() {
+    const modal = document.getElementById('reward-voucher-modal');
+    if (modal) modal.classList.add('hidden');
+    currentActiveModalVoucher = null;
+}
+
+function copyModalReferenceCode() {
+    if (!currentActiveModalVoucher) return;
+    navigator.clipboard.writeText(currentActiveModalVoucher.code).then(() => {
+        const btnText = document.getElementById('copy-btn-text');
+        if (btnText) btnText.innerText = '✅ Copied to Clipboard!';
+        if (window.GreenRouteSFX) GreenRouteSFX.playSuccess();
+        setTimeout(() => {
+            if (btnText) btnText.innerText = '📋 Copy Reference Code';
+        }, 2200);
+    }).catch(err => {
+        console.warn("Clipboard copy failed:", err);
+    });
+}
+
+function redeemModalReferenceCode() {
+    if (!currentActiveModalVoucher) return;
+    
+    const res = GreenRouteQRSecurity.redeemReferenceCode(currentActiveModalVoucher.code);
+    if (res.success) {
+        currentActiveModalVoucher.status = 'REDEEMED';
+        const statusPill = document.getElementById('ref-modal-status-pill');
+        if (statusPill) {
+            statusPill.className = 'voucher-status-pill used';
+            statusPill.innerText = '🔴 REDEEMED • USED AT COUNTER';
+        }
+        
+        const redeemBtn = document.getElementById('btn-redeem-modal-code');
+        if (redeemBtn) {
+            redeemBtn.disabled = true;
+            redeemBtn.innerText = '✅ Redeemed Successfully!';
+        }
+        
+        if (window.GreenRouteSFX) GreenRouteSFX.playSuccess();
+        confetti({ particleCount: 220, spread: 100, origin: { y: 0.5 } });
+        updateVoucherButtonBadge();
+        alert(res.message);
+    } else {
+        alert(res.message);
+    }
+}
+
+function showAlreadyScannedModal(binId) {
+    const label = document.getElementById('already-scanned-bin-label');
+    if (label) label.innerText = `Smart Bin #${binId}`;
+    const modal = document.getElementById('already-scanned-modal');
+    if (modal) modal.classList.remove('hidden');
+    if (window.GreenRouteSFX) GreenRouteSFX.playWarn();
+}
+
+function closeAlreadyScannedModal() {
+    const modal = document.getElementById('already-scanned-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function showDemoLimitModal(used, max) {
+    const modal = document.getElementById('demo-limit-modal');
+    if (modal) modal.classList.remove('hidden');
+    if (window.GreenRouteSFX) GreenRouteSFX.playWarn();
+}
+
+function closeDemoLimitModal() {
+    const modal = document.getElementById('demo-limit-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function openAllVouchersModal() {
+    renderAllVouchersList();
+    const modal = document.getElementById('all-vouchers-modal');
+    if (modal) modal.classList.remove('hidden');
+}
+
+function closeAllVouchersModal() {
+    const modal = document.getElementById('all-vouchers-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function renderAllVouchersList() {
+    const list = document.getElementById('all-vouchers-list');
+    const activeCounter = document.getElementById('vouchers-active-counter');
+    const totalCounter = document.getElementById('vouchers-total-counter');
+    if (!list) return;
+
+    const vouchers = GreenRouteQRSecurity.getVouchers();
+    const activeCount = GreenRouteQRSecurity.getActiveVouchersCount();
+
+    if (activeCounter) activeCounter.innerText = activeCount;
+    if (totalCounter) totalCounter.innerText = vouchers.length;
+
+    if (vouchers.length === 0) {
+        list.innerHTML = `
+            <div style="text-align: center; padding: 30px 10px; color: #64748B;">
+                <div style="font-size: 2.5rem; margin-bottom: 6px;">🎟️</div>
+                <div style="font-weight: 700; color: #1E293B;">No Reward Vouchers Yet</div>
+                <p style="font-size: 0.8rem; margin: 4px 0 14px 0;">Scan campus smart bins to earn verified single-use discount codes.</p>
+                <button class="btn btn-primary btn-sm" onclick="closeAllVouchersModal(); openScannerModal();">Scan Now</button>
+            </div>
+        `;
+        return;
+    }
+
+    list.innerHTML = "";
+    vouchers.forEach(v => {
+        const isRedeemed = v.status === 'REDEEMED';
+        const card = document.createElement('div');
+        card.className = `single-voucher-card ${isRedeemed ? 'redeemed' : 'active'}`;
+        
+        const dateStr = new Date(v.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        
+        card.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                <div>
+                    <span class="voucher-status-pill ${isRedeemed ? 'used' : 'active'}">
+                        ${isRedeemed ? '🔴 REDEEMED' : '🟢 ACTIVE'}
+                    </span>
+                    <strong style="margin-left: 6px; font-size: 0.82rem; color: #1E293B;">${v.binName}</strong>
+                </div>
+                <span style="font-size: 0.72rem; color: #64748B;">${dateStr}</span>
+            </div>
+            <div class="voucher-code-text" style="font-family: monospace; font-size: 1.05rem; font-weight: 800; color: ${isRedeemed ? '#64748B' : '#047857'}; letter-spacing: 1px; margin: 6px 0;">
+                ${v.code}
+            </div>
+            <div style="font-size: 0.76rem; color: #475569; margin-bottom: 8px;">
+                ${v.discountDesc || 'Campus Discount Voucher'} (+${v.points} pts)
+            </div>
+            <div style="display: flex; gap: 6px;">
+                <button class="btn btn-outline btn-sm" onclick="copyVoucherCode('${v.code}')" style="flex: 1; padding: 4px; font-size: 0.74rem;">
+                    📋 Copy Code
+                </button>
+                ${!isRedeemed ? `
+                    <button class="btn btn-primary btn-sm" onclick="redeemVoucherFromList('${v.code}')" style="flex: 1; padding: 4px; font-size: 0.74rem;">
+                        🎁 Redeem
+                    </button>
+                ` : `
+                    <button class="btn btn-outline btn-sm" disabled style="flex: 1; padding: 4px; font-size: 0.74rem; opacity: 0.6;">
+                        Used at Counter
+                    </button>
+                `}
+            </div>
+        `;
+        list.appendChild(card);
+    });
+}
+
+function copyVoucherCode(code) {
+    navigator.clipboard.writeText(code).then(() => {
+        if (window.GreenRouteSFX) GreenRouteSFX.playSuccess();
+        alert(`Copied Reference Code: ${code}`);
+    });
+}
+
+function redeemVoucherFromList(code) {
+    if (!confirm(`Redeem code "${code}" at campus counter now?\nNote: Every reference code can only be used once!`)) return;
+    const res = GreenRouteQRSecurity.redeemReferenceCode(code);
+    alert(res.message);
+    if (res.success) {
+        if (window.GreenRouteSFX) GreenRouteSFX.playSuccess();
+        confetti({ particleCount: 150, spread: 80 });
+        renderAllVouchersList();
+        updateVoucherButtonBadge();
+    }
+}
+
+function updateVoucherButtonBadge() {
+    if (!window.GreenRouteQRSecurity) return;
+    const count = GreenRouteQRSecurity.getActiveVouchersCount();
+    const headerBadge = document.getElementById('vouchers-count-badge');
+    const bannerBadge = document.getElementById('banner-vouchers-count');
+    if (headerBadge) headerBadge.innerText = count;
+    if (bannerBadge) bannerBadge.innerText = count;
+}
+
+function scrollToMap() {
+    const mapCard = document.getElementById('campus-map');
+    if (mapCard) {
+        mapCard.scrollIntoView({ behavior: 'smooth' });
     }
 }
 
@@ -758,6 +1102,7 @@ window.openScannerForBin = openScannerForBin;
 window.closeScannerModal = closeScannerModal;
 window.selectWasteType = selectWasteType;
 window.confirmScanRecycle = confirmScanRecycle;
+window.confirmVisionScanAndDeposit = confirmVisionScanAndDeposit;
 window.claimPerk = claimPerk;
 window.closeClaimModal = closeClaimModal;
 window.showRankUpModal = showRankUpModal;
@@ -765,3 +1110,17 @@ window.closeRankModal = closeRankModal;
 window.openRankProgress = openRankProgress;
 window.closeRankProgress = closeRankProgress;
 window.scrollToRewards = scrollToRewards;
+window.scrollToMap = scrollToMap;
+window.showRewardReferenceModal = showRewardReferenceModal;
+window.closeRewardVoucherModal = closeRewardVoucherModal;
+window.copyModalReferenceCode = copyModalReferenceCode;
+window.redeemModalReferenceCode = redeemModalReferenceCode;
+window.showAlreadyScannedModal = showAlreadyScannedModal;
+window.closeAlreadyScannedModal = closeAlreadyScannedModal;
+window.showDemoLimitModal = showDemoLimitModal;
+window.closeDemoLimitModal = closeDemoLimitModal;
+window.openAllVouchersModal = openAllVouchersModal;
+window.closeAllVouchersModal = closeAllVouchersModal;
+window.copyVoucherCode = copyVoucherCode;
+window.redeemVoucherFromList = redeemVoucherFromList;
+window.updateVoucherButtonBadge = updateVoucherButtonBadge;

@@ -321,6 +321,106 @@ body {
 .modal-overlay.hidden, .hidden { display: none !important; }
 .modal-content { text-align: center; position: relative; z-index: 20001; }
 
+/* ==========================================================
+   REWARD VOUCHER & REFERENCE CODE STYLES
+   ========================================================== */
+.voucher-card {
+    background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+    border: 2px dashed #10B981;
+    border-radius: 18px;
+    padding: 18px 16px;
+    margin: 14px 0;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.12);
+    transition: all 0.3s ease;
+}
+
+.voucher-card.redeemed {
+    background: #F3F4F6;
+    border-color: #9CA3AF;
+    box-shadow: none;
+    opacity: 0.85;
+}
+
+.voucher-code-large {
+    font-family: 'Outfit', monospace, sans-serif;
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #064E3B;
+    letter-spacing: 1.5px;
+    background: #FFFFFF;
+    padding: 8px 14px;
+    border-radius: 12px;
+    margin: 8px 0;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    user-select: all;
+    display: inline-block;
+    word-break: break-all;
+}
+
+.voucher-card.redeemed .voucher-code-large {
+    color: #6B7280;
+    border-color: #D1D5DB;
+    text-decoration: line-through;
+}
+
+.voucher-status-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+}
+
+.voucher-status-pill.active {
+    background: #047857;
+    color: #FFFFFF;
+}
+
+.voucher-status-pill.used {
+    background: #6B7280;
+    color: #FFFFFF;
+}
+
+.voucher-list-container {
+    max-height: 48vh;
+    overflow-y: auto;
+    padding-right: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 14px 0;
+}
+
+.single-voucher-card {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 14px;
+    padding: 12px 14px;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s ease;
+}
+
+.single-voucher-card:hover {
+    border-color: #10B981;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+}
+
+.single-voucher-card.is-redeemed {
+    background: #F8FAFC;
+    border-color: #E2E8F0;
+    opacity: 0.75;
+}
+
 /* --- Interactive Info Button --- */
 .info-btn {
     background: #cbd5e0;
